@@ -12,7 +12,6 @@ local GetRealmName = _G.GetRealmName
 local SecondsToTime = _G.SecondsToTime
 local IsShiftKeyDown = _G.IsShiftKeyDown
 local SendChatMessage = _G.SendChatMessage
-local UnitFactionGroup = _G.UnitFactionGroup
 local FormatLargeNumber = _G.FormatLargeNumber
 local GetItemCount = _G.GetItemCount
 local GetMoneyString = _G.GetMoneyString
@@ -147,7 +146,7 @@ function RE:OnEvent(self, event, ...)
 		end
 		RE.DB = _G.RECrystallizeDatabase
 		RE.Config = _G.RECrystallizeSettings
-		RE.RealmString = UnitFactionGroup("PLAYER").."_"..GetRealmName()
+		RE.RealmString = GetRealmName()
 		for key, value in pairs(RE.DefaultConfig) do
 			if RE.Config[key] == nil then
 				RE.Config[key] = value
