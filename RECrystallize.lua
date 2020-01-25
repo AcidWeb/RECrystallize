@@ -19,6 +19,10 @@ local ReplicateItems = _G.C_AuctionHouse.ReplicateItems
 local GetNumReplicateItems = _G.C_AuctionHouse.GetNumReplicateItems
 local GetReplicateItemInfo = _G.C_AuctionHouse.GetReplicateItemInfo
 local GetReplicateItemLink = _G.C_AuctionHouse.GetReplicateItemLink
+local GetRecipeItemLink = _G.C_TradeSkillUI.GetRecipeItemLink
+local GetRecipeReagentInfo = _G.C_TradeSkillUI.GetRecipeReagentInfo
+local GetRecipeReagentItemLink = _G.C_TradeSkillUI.GetRecipeReagentItemLink
+local GetRecipeNumItemsProduced = _G.C_TradeSkillUI.GetRecipeNumItemsProduced
 local ElvUI = _G.ElvUI
 
 RE.DefaultConfig = {["LastScan"] = 0, ["GuildChatPC"] = false, ["DatabaseCleanup"] = 432000, ["DatabaseVersion"] = 1}
@@ -27,6 +31,7 @@ RE.TooltipLink = ""
 RE.TooltipItemVariant = ""
 RE.TooltipItemID = 0
 RE.TooltipCount = 0
+RE.TooltipCustomCount = -1
 RE.PetCageItemID = 82800
 
 local function ElvUISwag(sender)
@@ -160,8 +165,23 @@ function RE:OnEvent(self, event, ...)
 			self:RegisterEvent("CHAT_MSG_GUILD")
 		end
 
-		_G.GameTooltip:HookScript("OnTooltipSetItem", function(self) RE:TooltipAddPrice(self) end)
+		_G.GameTooltip:HookScript("OnTooltipSetItem", function(self) RE:TooltipAddPrice(self); RE.TooltipCustomCount = -1 end)
 		hooksecurefunc("BattlePetToolTip_Show", RE.TooltipPetAddPrice)
+
+		local SetRecipeReagentItem = _G.GameTooltip.SetRecipeReagentItem
+		function _G.GameTooltip:SetRecipeReagentItem(...)
+			local link = GetRecipeReagentItemLink(...)
+			RE.TooltipCustomCount = select(3, GetRecipeReagentInfo(...))
+			if link then return self:SetHyperlink(link) end
+			return SetRecipeReagentItem(self, ...)
+		end
+		local SetRecipeResultItem = _G.GameTooltip.SetRecipeResultItem
+		function _G.GameTooltip:SetRecipeResultItem(...)
+			local link = GetRecipeItemLink(...)
+			RE.TooltipCustomCount = GetRecipeNumItemsProduced(...)
+			if link then return self:SetHyperlink(link) end
+			return SetRecipeResultItem(self, ...)
+		end
 
 		if ElvUI then
 			RE.IsSkinned = ElvUI[1].private.skins.blizzard.auctionhouse
@@ -189,8 +209,9 @@ function RE:TooltipAddPrice(self)
 				RE.TooltipItemVariant = ":::::"
 			end
 			if RE.DB[RE.RealmString][RE.TooltipItemID][RE.TooltipItemVariant] ~= nil then
-				if IsShiftKeyDown() and RE.TooltipCount > 0 then
-					self:AddLine("|cFF74D06CAuction House:|r    "..GetMoneyString(RE.DB[RE.RealmString][RE.TooltipItemID][RE.TooltipItemVariant].Price * RE.TooltipCount, true).." (x"..RE.TooltipCount..")", 1, 1, 1)
+				if IsShiftKeyDown() and (RE.TooltipCount > 0 or RE.TooltipCustomCount > 0) then
+					local count = RE.TooltipCustomCount > 0 and RE.TooltipCustomCount or RE.TooltipCount
+					self:AddLine("|cFF74D06CAuction House:|r    "..GetMoneyString(RE.DB[RE.RealmString][RE.TooltipItemID][RE.TooltipItemVariant].Price * count, true).." (x"..count..")", 1, 1, 1)
 				else
 					self:AddLine("|cFF74D06CAuction House:|r    "..GetMoneyString(RE.DB[RE.RealmString][RE.TooltipItemID][RE.TooltipItemVariant].Price, true), 1, 1, 1)
 				end
