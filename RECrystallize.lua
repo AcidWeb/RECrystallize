@@ -184,11 +184,16 @@ function RE:TooltipAddPrice(self)
 			RE.TooltipItemVariant = RE:GetItemString(link)
 			RE.TooltipCount = GetItemCount(RE.TooltipItemID)
 		end
-		if RE.DB[RE.RealmString][RE.TooltipItemID] ~= nil and RE.DB[RE.RealmString][RE.TooltipItemID][RE.TooltipItemVariant] ~= nil then
-			if IsShiftKeyDown() and RE.TooltipCount > 0 then
-				self:AddLine("|cFF74D06CAuction House:|r    "..GetMoneyString(RE.DB[RE.RealmString][RE.TooltipItemID][RE.TooltipItemVariant].Price * RE.TooltipCount, true).." (x"..RE.TooltipCount..")", 1, 1, 1)
-			else
-				self:AddLine("|cFF74D06CAuction House:|r    "..GetMoneyString(RE.DB[RE.RealmString][RE.TooltipItemID][RE.TooltipItemVariant].Price, true), 1, 1, 1)
+		if RE.DB[RE.RealmString][RE.TooltipItemID] ~= nil then
+			if RE.DB[RE.RealmString][RE.TooltipItemID][RE.TooltipItemVariant] == nil then
+				RE.TooltipItemVariant = ":::::"
+			end
+			if RE.DB[RE.RealmString][RE.TooltipItemID][RE.TooltipItemVariant] ~= nil then
+				if IsShiftKeyDown() and RE.TooltipCount > 0 then
+					self:AddLine("|cFF74D06CAuction House:|r    "..GetMoneyString(RE.DB[RE.RealmString][RE.TooltipItemID][RE.TooltipItemVariant].Price * RE.TooltipCount, true).." (x"..RE.TooltipCount..")", 1, 1, 1)
+				else
+					self:AddLine("|cFF74D06CAuction House:|r    "..GetMoneyString(RE.DB[RE.RealmString][RE.TooltipItemID][RE.TooltipItemVariant].Price, true), 1, 1, 1)
+				end
 			end
 		end
 	end
