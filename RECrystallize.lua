@@ -3,9 +3,10 @@ local _, RE = ...
 local GUI = LibStub("AceGUI-3.0")
 _G.RECrystallize = RE
 
-local time, wipe, collectgarbage, hooksecurefunc, strsplit, next, select, string, tostring, pairs, tonumber, floor, print = _G.time, _G.wipe, _G.collectgarbage, _G.hooksecurefunc, _G.strsplit, _G.next, _G.select, _G.string, _G.tostring, _G.pairs, _G.tonumber, _G.floor, _G.print
+local time, collectgarbage, hooksecurefunc, strsplit, next, select, string, tostring, pairs, tonumber, floor, print = _G.time, _G.collectgarbage, _G.hooksecurefunc, _G.strsplit, _G.next, _G.select, _G.string, _G.tostring, _G.pairs, _G.tonumber, _G.floor, _G.print
 local IsLinkType = _G.LinkUtil.IsLinkType
 local ExtractLink = _G.LinkUtil.ExtractLink
+local After = _G.C_Timer.After
 local Round = _G.Round
 local PlaySound = _G.PlaySound
 local GetRealmName = _G.GetRealmName
@@ -25,7 +26,7 @@ local GetRecipeReagentItemLink = _G.C_TradeSkillUI.GetRecipeReagentItemLink
 local GetRecipeNumItemsProduced = _G.C_TradeSkillUI.GetRecipeNumItemsProduced
 local ElvUI = _G.ElvUI
 
-RE.DefaultConfig = {["LastScan"] = 0, ["GuildChatPC"] = false, ["DatabaseCleanup"] = 432000, ["DatabaseVersion"] = 1}
+RE.DefaultConfig = {["LastScan"] = 0, ["GuildChatPC"] = false, ["DatabaseCleanup"] = 432000, ["ScanPulse"] = 1, ["DatabaseVersion"] = 1}
 RE.GUIInitialized = false
 RE.TooltipLink = ""
 RE.TooltipItemVariant = ""
@@ -41,48 +42,23 @@ local function ElvUISwag(sender)
 	return nil
 end
 
+local function tCount(table)
+   local count = 0
+   for _ in pairs(table) do
+		 count = count + 1
+	 end
+   return count
+end
+
 function RE:OnLoad(self)
 	self:RegisterEvent("ADDON_LOADED")
 	self:RegisterEvent("AUCTION_HOUSE_SHOW")
-	self:RegisterEvent("AUCTION_HOUSE_CLOSED")
 end
 
 function RE:OnEvent(self, event, ...)
 	if event == "REPLICATE_ITEM_LIST_UPDATE" then
-		if not RE.ItemCount then
-			RE.ItemCount = GetNumReplicateItems()
-		end
-		RE.AHButton:SetText(RE.CurrentItem.." / "..RE.ItemCount)
-		local price, _, _, _, _, _, _, itemID, status = select(10, GetReplicateItemInfo(RE.CurrentItem))
-		if status then
-			local link = GetReplicateItemLink(RE.CurrentItem)
-			if link then
-				local itemStr
-				if IsLinkType(link, "battlepet") then
-					itemStr = string.match(link, "battlepet:(%d*)")
-				else
-					itemStr = RE:GetItemString(link)
-				end
-				if RE.DBTemp[itemID] == nil then
-					RE.DBTemp[itemID] = {}
-				end
-				if RE.DBTemp[itemID][itemStr] ~= nil then
-					if price < RE.DBTemp[itemID][itemStr] then
-						RE.DBTemp[itemID][itemStr] = price
-					end
-				else
-					RE.DBTemp[itemID][itemStr] = price
-				end
-			end
-			RE.CurrentItem = RE.CurrentItem + 1
-			if RE.CurrentItem == RE.ItemCount then
-				RE:EndScan()
-				RE.AHButton:SetText("Scan finished!")
-				PlaySound(_G.SOUNDKIT.AUCTION_WINDOW_CLOSE)
-			else
-				RE:OnEvent(self, "REPLICATE_ITEM_LIST_UPDATE")
-			end
-		end
+		self:UnregisterEvent("REPLICATE_ITEM_LIST_UPDATE")
+		RE:Scan()
 	elseif event == "CHAT_MSG_GUILD" then
 		local msg = ...
 		if string.match(msg, "^!!!") then
@@ -131,16 +107,12 @@ function RE:OnEvent(self, event, ...)
 			end
 			RE.AHButton.frame:Show()
 		end
-		if time() - RE.Config.LastScan > 1800 then
+		if time() - RE.Config.LastScan > 1200 then
 			RE.AHButton:SetText("Start scan")
 			RE.AHButton:SetDisabled(false)
 		else
 			RE.AHButton:SetText("Scan unavailable")
 			RE.AHButton:SetDisabled(true)
-		end
-	elseif event == "AUCTION_HOUSE_CLOSED" then
-		if self:IsEventRegistered("REPLICATE_ITEM_LIST_UPDATE") then
-			RE:EndScan()
 		end
 	elseif event == "ADDON_LOADED" and ... == "RECrystallize" then
 		if not _G.RECrystallizeDatabase then
@@ -244,10 +216,9 @@ function RE:HandleButton(mode)
 end
 
 function RE:StartScan()
+	RE.DBScan = {}
 	RE.DBTemp = {}
 	RE.ScanStats = {0, 0, 0}
-	RE.CurrentItem = 0
-	RE.ItemCount = nil
 	RE.Config.LastScan = time()
 	RE.AHButton:SetText("Waiting...")
 	RE.AHButton:SetDisabled(true)
@@ -255,13 +226,64 @@ function RE:StartScan()
 	ReplicateItems()
 end
 
+function RE:Scan()
+	local num = GetNumReplicateItems()
+	local payloadDiff = tCount(RE.DBScan)
+
+	for i = 0, num - 1 do
+		 if RE.DBScan[i] == nil then
+				local price, _, _, _, _, _, _, itemID, status = select(10, GetReplicateItemInfo(i))
+				if status and price and itemID and price > 0 and itemID > 0 then
+					 local link = GetReplicateItemLink(i)
+					 if link then
+							RE.DBScan[i] = {["Price"] = price, ["ItemID"] = itemID, ["ItemLink"] = link}
+					 end
+				end
+		 end
+	end
+
+	local count = tCount(RE.DBScan)
+	RE.AHButton:SetText(count.." / "..num)
+	payloadDiff = count - payloadDiff
+	if payloadDiff > 0 then
+		 After(RE.Config.ScanPulse, RE.Scan)
+	else
+		RE:EndScan()
+	end
+end
+
 function RE:EndScan()
-	_G.RECrystallizeFrame:UnregisterEvent("REPLICATE_ITEM_LIST_UPDATE")
+	RE:ParseDatabase()
 	RE:SyncDatabase()
 	RE:CleanDatabase()
-	print("--- |cFF74D06CRE|rCrystallize Report ---\nScan time: "..SecondsToTime(time() - RE.Config.LastScan).."\nNew items: "..RE.ScanStats[1].."\nUpdated items: "..RE.ScanStats[2].."\nRemoved items: "..RE.ScanStats[3])
-	wipe(RE.DBTemp)
+	RE.DBScan = {}
+	RE.DBTemp = {}
 	collectgarbage("collect")
+
+	RE.AHButton:SetText("Scan finished!")
+	PlaySound(_G.SOUNDKIT.AUCTION_WINDOW_CLOSE)
+	print("--- |cFF74D06CRE|rCrystallize Report ---\nScan time: "..SecondsToTime(time() - RE.Config.LastScan).."\nNew items: "..RE.ScanStats[1].."\nUpdated items: "..RE.ScanStats[2].."\nRemoved items: "..RE.ScanStats[3])
+end
+
+function RE:ParseDatabase()
+	for _, offer in pairs(RE.DBScan) do
+		local itemStr
+		if IsLinkType(offer.ItemLink, "battlepet") then
+			itemStr = string.match(offer.ItemLink, "battlepet:(%d*)")
+		else
+			itemStr = RE:GetItemString(offer.ItemLink)
+		end
+		if RE.DBTemp[offer.ItemID] == nil then
+			RE.DBTemp[offer.ItemID] = {}
+		end
+		if RE.DBTemp[offer.ItemID][itemStr] ~= nil then
+			if offer.Price < RE.DBTemp[offer.ItemID][itemStr] then
+				RE.DBTemp[offer.ItemID][itemStr] = offer.Price
+			end
+		else
+			RE.DBTemp[offer.ItemID][itemStr] = offer.Price
+		end
+	end
 end
 
 function RE:SyncDatabase()
