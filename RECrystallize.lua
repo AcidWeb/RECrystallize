@@ -43,11 +43,11 @@ local function ElvUISwag(sender)
 end
 
 local function tCount(table)
-   local count = 0
-   for _ in pairs(table) do
-		 count = count + 1
-	 end
-   return count
+	local count = 0
+	for _ in pairs(table) do
+		count = count + 1
+	end
+	return count
 end
 
 function RE:OnLoad(self)
@@ -77,15 +77,15 @@ function RE:OnEvent(self, event, ...)
 				local g = floor(price / 100 / 100)
 				local s = floor((price / 100) % 100)
 				if g > 0 then
-					 pc = pc.." "..FormatLargeNumber(g).."g"
+					pc = pc.." "..FormatLargeNumber(g).."g"
 				end
 				if s > 0 then
-					 pc = pc.." "..s.."s"
+					pc = pc.." "..s.."s"
 				end
 				if scanTime > 0 then
-					 pc = pc.." - Data is "..scanTime.."h old"
+					pc = pc.." - Data is "..scanTime.."h old"
 				else
-					 pc = pc.." - Data is <1h old"
+					pc = pc.." - Data is <1h old"
 				end
 				SendChatMessage(pc, "GUILD")
 			else
@@ -231,22 +231,22 @@ function RE:Scan()
 	local payloadDiff = tCount(RE.DBScan)
 
 	for i = 0, num - 1 do
-		 if RE.DBScan[i] == nil then
-				local price, _, _, _, _, _, _, itemID, status = select(10, GetReplicateItemInfo(i))
-				if status and price and itemID and price > 0 and itemID > 0 then
-					 local link = GetReplicateItemLink(i)
-					 if link then
-							RE.DBScan[i] = {["Price"] = price, ["ItemID"] = itemID, ["ItemLink"] = link}
-					 end
+		if RE.DBScan[i] == nil then
+			local price, _, _, _, _, _, _, itemID, status = select(10, GetReplicateItemInfo(i))
+			if status and price and itemID and price > 0 and itemID > 0 then
+				local link = GetReplicateItemLink(i)
+				if link then
+					RE.DBScan[i] = {["Price"] = price, ["ItemID"] = itemID, ["ItemLink"] = link}
 				end
-		 end
+			end
+		end
 	end
 
 	local count = tCount(RE.DBScan)
 	RE.AHButton:SetText(count.." / "..num)
 	payloadDiff = count - payloadDiff
 	if payloadDiff > 0 then
-		 After(RE.Config.ScanPulse, RE.Scan)
+		After(RE.Config.ScanPulse, RE.Scan)
 	else
 		RE:EndScan()
 	end
@@ -293,9 +293,9 @@ function RE:SyncDatabase()
 		end
 		for variant, _ in pairs(RE.DBTemp[itemID]) do
 			if RE.DB[RE.RealmString][itemID][variant] ~= nil then
-					if RE.DBTemp[itemID][variant] ~= RE.DB[RE.RealmString][itemID][variant].Price then
-						RE.ScanStats[2] = RE.ScanStats[2] + 1
-					end
+				if RE.DBTemp[itemID][variant] ~= RE.DB[RE.RealmString][itemID][variant].Price then
+					RE.ScanStats[2] = RE.ScanStats[2] + 1
+				end
 			else
 				RE.ScanStats[1] = RE.ScanStats[1] + 1
 			end
