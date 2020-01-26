@@ -169,7 +169,7 @@ end
 function RE:TooltipAddPrice(self)
 	if self:IsForbidden() then return end
 	local _, link = self:GetItem()
-	if IsLinkType(link, "item") then
+	if link and IsLinkType(link, "item") then
 		if link ~= RE.TooltipLink then
 			RE.TooltipLink = link
 			RE.TooltipItemID = tonumber(string.match(link, "item:(%d*)"))
@@ -232,11 +232,11 @@ function RE:Scan()
 
 	for i = 0, num - 1 do
 		if RE.DBScan[i] == nil then
-			local price, _, _, _, _, _, _, itemID, status = select(10, GetReplicateItemInfo(i))
-			if status and price and itemID and price > 0 and itemID > 0 then
+			local count, _, _, _, _, _, _, price, _, _, _, _, _, _, itemID, status = select(3, GetReplicateItemInfo(i))
+			if status and price and itemID and count and price > 0 and itemID > 0 and count > 0 then
 				local link = GetReplicateItemLink(i)
 				if link then
-					RE.DBScan[i] = {["Price"] = price, ["ItemID"] = itemID, ["ItemLink"] = link}
+					RE.DBScan[i] = {["Price"] = price / count, ["ItemID"] = itemID, ["ItemLink"] = link}
 				end
 			end
 		end
