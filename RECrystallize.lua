@@ -14,9 +14,10 @@ local GetRealmName = _G.GetRealmName
 local SecondsToTime = _G.SecondsToTime
 local IsShiftKeyDown = _G.IsShiftKeyDown
 local SendChatMessage = _G.SendChatMessage
+local SetTooltipMoney = _G.SetTooltipMoney
 local FormatLargeNumber = _G.FormatLargeNumber
 local GetItemCount = _G.GetItemCount
-local GetMoneyString = _G.GetMoneyString
+local GetCoinTextureString = _G.GetCoinTextureString
 local ReplicateItems = _G.C_AuctionHouse.ReplicateItems
 local GetNumReplicateItems = _G.C_AuctionHouse.GetNumReplicateItems
 local GetReplicateItemInfo = _G.C_AuctionHouse.GetReplicateItemInfo
@@ -72,24 +73,31 @@ function RE:OnEvent(self, event, ...)
 				itemID = PETCAGEID
 				itemStr = string.match(msg, "battlepet:(%d*)")
 			end
-			if RE.DB[RE.RealmString][itemID] ~= nil and RE.DB[RE.RealmString][itemID][itemStr] ~= nil then
-				local pc = "[PC]"
-				local price = RE.DB[RE.RealmString][itemID][itemStr].Price
-				local scanTime = Round((time() - RE.DB[RE.RealmString][itemID][itemStr].LastSeen) / 60 / 60)
-				local g = floor(price / 100 / 100)
-				local s = floor((price / 100) % 100)
-				if g > 0 then
-					pc = pc.." "..FormatLargeNumber(g).."g"
+			if RE.DB[RE.RealmString][itemID] ~= nil then
+				if RE.DB[RE.RealmString][itemID][itemStr] == nil then
+					itemStr = ":::::"
 				end
-				if s > 0 then
-					pc = pc.." "..s.."s"
-				end
-				if scanTime > 0 then
-					pc = pc.." - Data is "..scanTime.."h old"
+				if RE.DB[RE.RealmString][itemID][itemStr] ~= nil then
+					local pc = "[PC]"
+					local price = RE.DB[RE.RealmString][itemID][itemStr].Price
+					local scanTime = Round((time() - RE.DB[RE.RealmString][itemID][itemStr].LastSeen) / 60 / 60)
+					local g = floor(price / 100 / 100)
+					local s = floor((price / 100) % 100)
+					if g > 0 then
+						pc = pc.." "..FormatLargeNumber(g).."g"
+					end
+					if s > 0 then
+						pc = pc.." "..s.."s"
+					end
+					if scanTime > 0 then
+						pc = pc.." - Data is "..scanTime.."h old"
+					else
+						pc = pc.." - Data is <1h old"
+					end
+					SendChatMessage(pc, "GUILD")
 				else
-					pc = pc.." - Data is <1h old"
+					SendChatMessage("[PC] Never seen it on AH.", "GUILD")
 				end
-				SendChatMessage(pc, "GUILD")
 			else
 				SendChatMessage("[PC] Never seen it on AH.", "GUILD")
 			end
@@ -185,9 +193,9 @@ function RE:TooltipAddPrice(self)
 			if RE.DB[RE.RealmString][RE.TooltipItemID][RE.TooltipItemVariant] ~= nil then
 				if IsShiftKeyDown() and (RE.TooltipCount > 0 or RE.TooltipCustomCount > 0) then
 					local count = RE.TooltipCustomCount > 0 and RE.TooltipCustomCount or RE.TooltipCount
-					self:AddLine("|cFF74D06C"..BUTTON_LAG_AUCTIONHOUSE..":|r    "..GetMoneyString(RE.DB[RE.RealmString][RE.TooltipItemID][RE.TooltipItemVariant].Price * count, true).." (x"..count..")", 1, 1, 1)
+					SetTooltipMoney(self, RE.DB[RE.RealmString][RE.TooltipItemID][RE.TooltipItemVariant].Price * count, nil, "|cFF74D06C"..BUTTON_LAG_AUCTIONHOUSE..":|r", " (x"..count..")")
 				else
-					self:AddLine("|cFF74D06C"..BUTTON_LAG_AUCTIONHOUSE..":|r    "..GetMoneyString(RE.DB[RE.RealmString][RE.TooltipItemID][RE.TooltipItemVariant].Price, true), 1, 1, 1)
+					SetTooltipMoney(self, RE.DB[RE.RealmString][RE.TooltipItemID][RE.TooltipItemVariant].Price, nil, "|cFF74D06C"..BUTTON_LAG_AUCTIONHOUSE..":|r", nil)
 				end
 			end
 		end
@@ -204,7 +212,7 @@ function RE:TooltipPetAddPrice()
 		else
 			text = text.."    "
 		end
-		_G.BattlePetTooltip.Owned:SetText(text.."|cFF74D06C"..L["AH"]..":|r |cFFFFFFFF"..GetMoneyString(RE.DB[RE.RealmString][PETCAGEID][speciesID].Price, true).."|r")
+		_G.BattlePetTooltip.Owned:SetText(text.."|cFF74D06C"..L["AH"]..":|r |cFFFFFFFF"..GetCoinTextureString(RE.DB[RE.RealmString][PETCAGEID][speciesID].Price, _G.BattlePetTooltip.Owned:GetStringHeight() * 0.65).."|r")
 		_G.BattlePetTooltip:SetSize(260, 145)
 	end
 end
@@ -264,7 +272,7 @@ function RE:EndScan()
 
 	RE.AHButton:SetText(L["Scan finished!"])
 	PlaySound(_G.SOUNDKIT.AUCTION_WINDOW_CLOSE)
-	print("--- |cFF74D06CRE|rCrystallize "..LANDING_PAGE_REPORT.." ---")
+	print("|cFF9D9D9D---|r |cFF74D06CRE|rCrystallize "..LANDING_PAGE_REPORT.." |cFF9D9D9D---|r")
 	print(L["Scan time"]..": "..SecondsToTime(time() - RE.Config.LastScan))
 	print(L["New items"]..": "..RE.ScanStats[1])
 	print(L["Updated items"]..": "..RE.ScanStats[2])
