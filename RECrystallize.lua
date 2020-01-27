@@ -232,11 +232,11 @@ function RE:Scan()
 
 	for i = 0, num - 1 do
 		if RE.DBScan[i] == nil then
-			local count, _, _, _, _, _, _, price, _, _, _, _, _, _, itemID, status = select(3, GetReplicateItemInfo(i))
-			if status and price and itemID and count and price > 0 and itemID > 0 and count > 0 then
+			local count, quality, _, _, _, _, _, price, _, _, _, _, _, _, itemID, status = select(3, GetReplicateItemInfo(i))
+			if status and count and quality and price and itemID and count > 0 and price > 0 and itemID > 0 then
 				local link = GetReplicateItemLink(i)
 				if link then
-					RE.DBScan[i] = {["Price"] = price / count, ["ItemID"] = itemID, ["ItemLink"] = link}
+					RE.DBScan[i] = {["Price"] = price / count, ["ItemID"] = itemID, ["ItemLink"] = link, ["Quality"] = quality}
 				end
 			end
 		end
@@ -267,21 +267,23 @@ end
 
 function RE:ParseDatabase()
 	for _, offer in pairs(RE.DBScan) do
-		local itemStr
-		if IsLinkType(offer.ItemLink, "battlepet") then
-			itemStr = string.match(offer.ItemLink, "battlepet:(%d*)")
-		else
-			itemStr = RE:GetItemString(offer.ItemLink)
-		end
-		if RE.DBTemp[offer.ItemID] == nil then
-			RE.DBTemp[offer.ItemID] = {}
-		end
-		if RE.DBTemp[offer.ItemID][itemStr] ~= nil then
-			if offer.Price < RE.DBTemp[offer.ItemID][itemStr] then
+		if offer.Quality > 0 then
+			local itemStr
+			if IsLinkType(offer.ItemLink, "battlepet") then
+				itemStr = string.match(offer.ItemLink, "battlepet:(%d*)")
+			else
+				itemStr = RE:GetItemString(offer.ItemLink)
+			end
+			if RE.DBTemp[offer.ItemID] == nil then
+				RE.DBTemp[offer.ItemID] = {}
+			end
+			if RE.DBTemp[offer.ItemID][itemStr] ~= nil then
+				if offer.Price < RE.DBTemp[offer.ItemID][itemStr] then
+					RE.DBTemp[offer.ItemID][itemStr] = offer.Price
+				end
+			else
 				RE.DBTemp[offer.ItemID][itemStr] = offer.Price
 			end
-		else
-			RE.DBTemp[offer.ItemID][itemStr] = offer.Price
 		end
 	end
 end
