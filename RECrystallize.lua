@@ -26,6 +26,8 @@ local GetRecipeReagentItemLink = _G.C_TradeSkillUI.GetRecipeReagentItemLink
 local GetRecipeNumItemsProduced = _G.C_TradeSkillUI.GetRecipeNumItemsProduced
 local ElvUI = _G.ElvUI
 
+local PETCAGEID = 82800
+
 RE.DefaultConfig = {["LastScan"] = 0, ["GuildChatPC"] = false, ["DatabaseCleanup"] = 432000, ["ScanPulse"] = 1, ["DatabaseVersion"] = 1}
 RE.GUIInitialized = false
 RE.TooltipLink = ""
@@ -33,7 +35,6 @@ RE.TooltipItemVariant = ""
 RE.TooltipItemID = 0
 RE.TooltipCount = 0
 RE.TooltipCustomCount = -1
-RE.PetCageItemID = 82800
 
 local function ElvUISwag(sender)
 	if sender == "Livarax-BurningLegion" then
@@ -67,7 +68,7 @@ function RE:OnEvent(self, event, ...)
 				itemID = tonumber(string.match(msg, "item:(%d*)"))
 				itemStr = RE:GetItemString(msg)
 			elseif IsLinkType(msg, "battlepet") then
-				itemID = RE.PetCageItemID
+				itemID = PETCAGEID
 				itemStr = string.match(msg, "battlepet:(%d*)")
 			end
 			if RE.DB[RE.RealmString][itemID] ~= nil and RE.DB[RE.RealmString][itemID][itemStr] ~= nil then
@@ -195,14 +196,14 @@ end
 function RE:TooltipPetAddPrice()
 	if _G.BattlePetTooltip:IsForbidden() then return end
 	local speciesID = tostring(_G.BattlePetTooltip.speciesID)
-	if RE.DB[RE.RealmString][RE.PetCageItemID] ~= nil and RE.DB[RE.RealmString][RE.PetCageItemID][speciesID] ~= nil then
+	if RE.DB[RE.RealmString][PETCAGEID] ~= nil and RE.DB[RE.RealmString][PETCAGEID][speciesID] ~= nil then
 		local text = _G.BattlePetTooltip.Owned:GetText()
 		if text == nil then
 			text = ""
 		else
 			text = text.."    "
 		end
-		_G.BattlePetTooltip.Owned:SetText(text.."|cFF74D06CAH:|r |cFFFFFFFF"..GetMoneyString(RE.DB[RE.RealmString][RE.PetCageItemID][speciesID].Price, true).."|r")
+		_G.BattlePetTooltip.Owned:SetText(text.."|cFF74D06CAH:|r |cFFFFFFFF"..GetMoneyString(RE.DB[RE.RealmString][PETCAGEID][speciesID].Price, true).."|r")
 		_G.BattlePetTooltip:SetSize(260, 145)
 	end
 end
