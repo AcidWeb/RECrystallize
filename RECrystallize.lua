@@ -1,5 +1,6 @@
 local _G = _G
 local _, RE = ...
+local L = LibStub("AceLocale-3.0"):GetLocale("RECrystallize")
 local GUI = LibStub("AceGUI-3.0")
 _G.RECrystallize = RE
 
@@ -109,10 +110,10 @@ function RE:OnEvent(self, event, ...)
 			RE.AHButton.frame:Show()
 		end
 		if time() - RE.Config.LastScan > 1200 then
-			RE.AHButton:SetText("Start scan")
+			RE.AHButton:SetText(L["Start scan"])
 			RE.AHButton:SetDisabled(false)
 		else
-			RE.AHButton:SetText("Scan unavailable")
+			RE.AHButton:SetText(L["Scan unavailable"])
 			RE.AHButton:SetDisabled(true)
 		end
 	elseif event == "ADDON_LOADED" and ... == "RECrystallize" then
@@ -184,9 +185,9 @@ function RE:TooltipAddPrice(self)
 			if RE.DB[RE.RealmString][RE.TooltipItemID][RE.TooltipItemVariant] ~= nil then
 				if IsShiftKeyDown() and (RE.TooltipCount > 0 or RE.TooltipCustomCount > 0) then
 					local count = RE.TooltipCustomCount > 0 and RE.TooltipCustomCount or RE.TooltipCount
-					self:AddLine("|cFF74D06CAuction House:|r    "..GetMoneyString(RE.DB[RE.RealmString][RE.TooltipItemID][RE.TooltipItemVariant].Price * count, true).." (x"..count..")", 1, 1, 1)
+					self:AddLine("|cFF74D06C"..BUTTON_LAG_AUCTIONHOUSE..":|r    "..GetMoneyString(RE.DB[RE.RealmString][RE.TooltipItemID][RE.TooltipItemVariant].Price * count, true).." (x"..count..")", 1, 1, 1)
 				else
-					self:AddLine("|cFF74D06CAuction House:|r    "..GetMoneyString(RE.DB[RE.RealmString][RE.TooltipItemID][RE.TooltipItemVariant].Price, true), 1, 1, 1)
+					self:AddLine("|cFF74D06C"..BUTTON_LAG_AUCTIONHOUSE..":|r    "..GetMoneyString(RE.DB[RE.RealmString][RE.TooltipItemID][RE.TooltipItemVariant].Price, true), 1, 1, 1)
 				end
 			end
 		end
@@ -203,7 +204,7 @@ function RE:TooltipPetAddPrice()
 		else
 			text = text.."    "
 		end
-		_G.BattlePetTooltip.Owned:SetText(text.."|cFF74D06CAH:|r |cFFFFFFFF"..GetMoneyString(RE.DB[RE.RealmString][PETCAGEID][speciesID].Price, true).."|r")
+		_G.BattlePetTooltip.Owned:SetText(text.."|cFF74D06C"..L["AH"]..":|r |cFFFFFFFF"..GetMoneyString(RE.DB[RE.RealmString][PETCAGEID][speciesID].Price, true).."|r")
 		_G.BattlePetTooltip:SetSize(260, 145)
 	end
 end
@@ -221,7 +222,7 @@ function RE:StartScan()
 	RE.DBTemp = {}
 	RE.ScanStats = {0, 0, 0}
 	RE.Config.LastScan = time()
-	RE.AHButton:SetText("Waiting...")
+	RE.AHButton:SetText(L["Waiting..."])
 	RE.AHButton:SetDisabled(true)
 	_G.RECrystallizeFrame:RegisterEvent("REPLICATE_ITEM_LIST_UPDATE")
 	ReplicateItems()
@@ -261,9 +262,13 @@ function RE:EndScan()
 	RE.DBTemp = {}
 	collectgarbage("collect")
 
-	RE.AHButton:SetText("Scan finished!")
+	RE.AHButton:SetText(L["Scan finished!"])
 	PlaySound(_G.SOUNDKIT.AUCTION_WINDOW_CLOSE)
-	print("--- |cFF74D06CRE|rCrystallize Report ---\nScan time: "..SecondsToTime(time() - RE.Config.LastScan).."\nNew items: "..RE.ScanStats[1].."\nUpdated items: "..RE.ScanStats[2].."\nRemoved items: "..RE.ScanStats[3])
+	print("--- |cFF74D06CRE|rCrystallize "..LANDING_PAGE_REPORT.." ---")
+	print(L["Scan time"]..": "..SecondsToTime(time() - RE.Config.LastScan))
+	print(L["New items"]..": "..RE.ScanStats[1])
+	print(L["Updated items"]..": "..RE.ScanStats[2])
+	print(L["Removed items"]..": "..RE.ScanStats[3])
 end
 
 function RE:ParseDatabase()
