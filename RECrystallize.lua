@@ -35,6 +35,7 @@ RE.DefaultConfig = {["LastScan"] = 0, ["GuildChatPC"] = false, ["DatabaseCleanup
 RE.GUIInitialized = false
 RE.TooltipLink = ""
 RE.TooltipItemVariant = ""
+RE.TooltipIcon = ""
 RE.TooltipItemID = 0
 RE.TooltipCount = 0
 RE.TooltipCustomCount = -1
@@ -96,8 +97,10 @@ function RE:OnEvent(self, event, ...)
 				itemStr = RE:GetPetString(msg)
 			end
 			if RE.DB[RE.RealmString][itemID] ~= nil then
+				local suffix = ""
 				if RE.DB[RE.RealmString][itemID][itemStr] == nil then
-					itemStr = ":::::"
+					itemStr = RE:GetCheapestVariant(RE.DB[RE.RealmString][itemID])
+					suffix = " - Partial match!"
 				end
 				if RE.DB[RE.RealmString][itemID][itemStr] ~= nil then
 					local pc = "[PC]"
@@ -116,7 +119,7 @@ function RE:OnEvent(self, event, ...)
 					else
 						pc = pc.." - Data is <1h old"
 					end
-					SendChatMessage(pc, "GUILD")
+					SendChatMessage(pc..suffix, "GUILD")
 				else
 					SendChatMessage("[PC] Never seen it on AH.", "GUILD")
 				end
@@ -208,17 +211,19 @@ function RE:TooltipAddPrice(self)
 			RE.TooltipItemID = tonumber(sMatch(link, "item:(%d+)"))
 			RE.TooltipItemVariant = RE:GetItemString(link)
 			RE.TooltipCount = GetItemCount(RE.TooltipItemID, true)
+			RE.TooltipIcon = ""
 		end
 		if RE.DB[RE.RealmString][RE.TooltipItemID] ~= nil then
 			if RE.DB[RE.RealmString][RE.TooltipItemID][RE.TooltipItemVariant] == nil then
-				RE.TooltipItemVariant = ":::::"
+				RE.TooltipItemVariant = RE:GetCheapestVariant(RE.DB[RE.RealmString][RE.TooltipItemID])
+				RE.TooltipIcon = " |TInterface\\AddOns\\RECrystallize\\Icons\\Warning:8|t"
 			end
 			if RE.DB[RE.RealmString][RE.TooltipItemID][RE.TooltipItemVariant] ~= nil then
 				if IsShiftKeyDown() and (RE.TooltipCount > 0 or RE.TooltipCustomCount > 0) then
 					local count = RE.TooltipCustomCount > 0 and RE.TooltipCustomCount or RE.TooltipCount
-					SetTooltipMoney(self, RE.DB[RE.RealmString][RE.TooltipItemID][RE.TooltipItemVariant].Price * count, nil, "|cFF74D06C"..BUTTON_LAG_AUCTIONHOUSE..":|r", " (x"..count..")")
+					SetTooltipMoney(self, RE.DB[RE.RealmString][RE.TooltipItemID][RE.TooltipItemVariant].Price * count, nil, "|cFF74D06C"..BUTTON_LAG_AUCTIONHOUSE..":|r", " (x"..count..")"..RE.TooltipIcon)
 				else
-					SetTooltipMoney(self, RE.DB[RE.RealmString][RE.TooltipItemID][RE.TooltipItemVariant].Price, nil, "|cFF74D06C"..BUTTON_LAG_AUCTIONHOUSE..":|r", nil)
+					SetTooltipMoney(self, RE.DB[RE.RealmString][RE.TooltipItemID][RE.TooltipItemVariant].Price, nil, "|cFF74D06C"..BUTTON_LAG_AUCTIONHOUSE..":|r", RE.TooltipIcon)
 				end
 			end
 		end
@@ -370,4 +375,15 @@ end
 function RE:GetPetString(link)
 	local raw = select(2, ExtractLink(link))
 	return tConcat({sMatch(raw, "^(%d+):(%d+):(%d+):(%d+):(%d+):(%d+)")}, ":")
+end
+
+function RE:GetCheapestVariant(items)
+	local target, lowest
+	for variant, data in pairs(items) do
+		if not lowest or data.Price < lowest then
+			lowest = data.Price
+			target = variant
+		end
+	end
+	return target
 end
