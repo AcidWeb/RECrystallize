@@ -207,7 +207,7 @@ function RE:TooltipAddPrice(self)
 			RE.TooltipLink = link
 			RE.TooltipItemID = tonumber(sMatch(link, "item:(%d+)"))
 			RE.TooltipItemVariant = RE:GetItemString(link)
-			RE.TooltipCount = GetItemCount(RE.TooltipItemID)
+			RE.TooltipCount = GetItemCount(RE.TooltipItemID, true)
 		end
 		if RE.DB[RE.RealmString][RE.TooltipItemID] ~= nil then
 			if RE.DB[RE.RealmString][RE.TooltipItemID][RE.TooltipItemVariant] == nil then
