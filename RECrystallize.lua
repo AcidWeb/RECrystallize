@@ -12,13 +12,14 @@ local ExtractLink = _G.LinkUtil.ExtractLink
 local After = _G.C_Timer.After
 local Round = _G.Round
 local PlaySound = _G.PlaySound
+local GetItemInfo = _G.GetItemInfo
+local GetItemCount = _G.GetItemCount
 local GetRealmName = _G.GetRealmName
 local SecondsToTime = _G.SecondsToTime
 local IsShiftKeyDown = _G.IsShiftKeyDown
 local SendChatMessage = _G.SendChatMessage
 local SetTooltipMoney = _G.SetTooltipMoney
 local FormatLargeNumber = _G.FormatLargeNumber
-local GetItemCount = _G.GetItemCount
 local ReplicateItems = _G.C_AuctionHouse.ReplicateItems
 local GetNumReplicateItems = _G.C_AuctionHouse.GetNumReplicateItems
 local GetReplicateItemInfo = _G.C_AuctionHouse.GetReplicateItemInfo
@@ -33,6 +34,7 @@ local PETCAGEID = 82800
 
 RE.DefaultConfig = {["LastScan"] = 0, ["GuildChatPC"] = false, ["DatabaseCleanup"] = 432000, ["ScanPulse"] = 1, ["DatabaseVersion"] = 1}
 RE.GUIInitialized = false
+RE.RecipeLock = false
 RE.BlockTooltip = 0
 RE.TooltipLink = ""
 RE.TooltipItemVariant = ""
@@ -190,6 +192,7 @@ function RE:OnEvent(self, event, ...)
 		end
 
 		_G.GameTooltip:HookScript("OnTooltipSetItem", function(self) RE:TooltipAddPrice(self); RE.TooltipCustomCount = -1 end)
+		_G.GameTooltip:HookScript("OnTooltipCleared", function(_) RE.RecipeLock = false end)
 		hooksecurefunc("BattlePetToolTip_Show", function(speciesID, level, breedQuality, maxHealth, power, speed) RE:TooltipPetAddPrice(sFormat("|cffffffff|Hbattlepet:%s:%s:%s:%s:%s:%s:0000000000000000:0|h[XYZ]|h|r", speciesID, level, breedQuality, maxHealth, power, speed)) end)
 		hooksecurefunc("FloatingBattlePet_Show", function(speciesID, level, breedQuality, maxHealth, power, speed) RE:TooltipPetAddPrice(sFormat("|cffffffff|Hbattlepet:%s:%s:%s:%s:%s:%s:0000000000000000:0|h[XYZ]|h|r", speciesID, level, breedQuality, maxHealth, power, speed)) end)
 
@@ -223,6 +226,13 @@ function RE:TooltipAddPrice(self)
 	if self:IsForbidden() then return end
 	local _, link = self:GetItem()
 	if link and IsLinkType(link, "item") then
+		local itemTypeId, itemSubTypeId = select(12, GetItemInfo(link))
+		if not RE.RecipeLock and itemTypeId == LE_ITEM_CLASS_RECIPE and itemSubTypeId ~= LE_ITEM_RECIPE_BOOK then
+			RE.RecipeLock = true
+			return
+		else
+			RE.RecipeLock = false
+		end
 		if link ~= RE.TooltipLink then
 			RE.TooltipLink = link
 			RE.TooltipItemID = tonumber(sMatch(link, "item:(%d+)"))
