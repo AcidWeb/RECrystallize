@@ -33,6 +33,7 @@ local PETCAGEID = 82800
 
 RE.DefaultConfig = {["LastScan"] = 0, ["GuildChatPC"] = false, ["DatabaseCleanup"] = 432000, ["ScanPulse"] = 1, ["DatabaseVersion"] = 1}
 RE.GUIInitialized = false
+RE.BlockTooltip = 0
 RE.TooltipLink = ""
 RE.TooltipItemVariant = ""
 RE.TooltipIcon = ""
@@ -79,6 +80,7 @@ end
 function RE:OnLoad(self)
 	self:RegisterEvent("ADDON_LOADED")
 	self:RegisterEvent("AUCTION_HOUSE_SHOW")
+	self:RegisterEvent("AUCTION_HOUSE_CLOSED")
 end
 
 function RE:OnEvent(self, event, ...)
@@ -130,7 +132,20 @@ function RE:OnEvent(self, event, ...)
 	elseif event == "AUCTION_HOUSE_SHOW" then
 		if not RE.GUIInitialized then
 			RE.GUIInitialized = true
+
 			hooksecurefunc(_G.AuctionHouseFrame, "SetDisplayMode", RE.HandleButton)
+			local function HijackOnEnterCallback(owner, rowData)
+				if rowData.itemKey then
+					if rowData.itemKey.battlePetSpeciesID > 0 then
+						RE.BlockTooltip = rowData.itemKey.battlePetSpeciesID
+					else
+						RE.BlockTooltip = rowData.itemKey.itemID
+					end
+				end
+				_G.AuctionHouseUtil.LineOnEnterCallback(owner, rowData)
+			end
+			_G.AuctionHouseFrame.BrowseResultsFrame.ItemList:SetLineOnEnterCallback(HijackOnEnterCallback)
+
 			RE.AHButton = GUI:Create("Button")
 			RE.AHButton:SetWidth(139)
 			RE.AHButton:SetCallback("OnClick", RE.StartScan)
@@ -149,6 +164,8 @@ function RE:OnEvent(self, event, ...)
 			RE.AHButton:SetText(L["Scan unavailable"])
 			RE.AHButton:SetDisabled(true)
 		end
+	elseif event == "AUCTION_HOUSE_CLOSED" then
+		RE.BlockTooltip = 0
 	elseif event == "ADDON_LOADED" and ... == "RECrystallize" then
 		if not _G.RECrystallizeDatabase then
 			_G.RECrystallizeDatabase = {}
@@ -213,6 +230,7 @@ function RE:TooltipAddPrice(self)
 			RE.TooltipCount = GetItemCount(RE.TooltipItemID, true)
 			RE.TooltipIcon = ""
 		end
+		if RE.BlockTooltip == RE.TooltipItemID then return end
 		if RE.DB[RE.RealmString][RE.TooltipItemID] ~= nil then
 			if RE.DB[RE.RealmString][RE.TooltipItemID][RE.TooltipItemVariant] == nil then
 				RE.TooltipItemVariant = RE:GetCheapestVariant(RE.DB[RE.RealmString][RE.TooltipItemID])
@@ -238,6 +256,7 @@ function RE:TooltipPetAddPrice(link)
 		tt = _G.FloatingBattlePetTooltip
 	end
 	if tt then
+		if RE.BlockTooltip == tt.speciesID then return end
 		if tt:IsForbidden() then return end
 		if link ~= RE.TooltipLink then
 			RE.TooltipLink = link
