@@ -42,6 +42,53 @@ RE.TooltipIcon = ""
 RE.TooltipItemID = 0
 RE.TooltipCount = 0
 RE.TooltipCustomCount = -1
+RE.AceConfig = {
+	type = "group",
+	args = {
+		minimap = {
+			name = L["Always display the price of the entire stock"],
+			desc = L["When enabled the functionality of the SHIFT button will be swapped."],
+			type = "toggle",
+			width = "full",
+			order = 1,
+			set = function(_, val) RE.Config.AlwaysShowAll = val end,
+			get = function(_) return RE.Config.AlwaysShowAll end
+		},
+		dbcleanup = {
+			name = L["Data freshness"],
+			desc = L["The number of days after which old data will be deleted."],
+			type = "range",
+			width = "double",
+			order = 2,
+			min = 1,
+			max = 14,
+			step = 1,
+			set = function(_, val) RE.Config.DatabaseCleanup = val * 86400 end,
+			get = function(_) return RE.Config.DatabaseCleanup / 86400 end
+		},
+		scanpulse = {
+			name = L["Scanning speed"],
+			desc = L["Setting this value lower might speed up the scanning process but also can cause disconnects."],
+			type = "range",
+			width = "double",
+			order = 3,
+			min = 0.1,
+			max = 2,
+			step = 0.1,
+			set = function(_, val) RE.Config.ScanPulse = val end,
+			get = function(_) return RE.Config.ScanPulse end
+		},
+		dbpurge = {
+			name = L["Purge this server database"],
+			desc = L["WARNING! This operation is not reversible!"],
+			type = "execute",
+			width = "double",
+			order = 4,
+			confirm = true,
+			func = function() RE.DB[RE.RealmString] = {}; collectgarbage("collect") end
+		},
+	}
+}
 
 local function ElvUISwag(sender)
 	if sender == "Livarax-BurningLegion" then
@@ -186,6 +233,8 @@ function RE:OnEvent(self, event, ...)
 		if RE.DB[RE.RealmString] == nil then
 			RE.DB[RE.RealmString] = {}
 		end
+		_G.LibStub("AceConfigRegistry-3.0"):RegisterOptionsTable("RECrystallize", RE.AceConfig)
+		_G.LibStub("AceConfigDialog-3.0"):AddToBlizOptions("RECrystallize", "RECrystallize")
 
 		if RE.Config.GuildChatPC then
 			self:RegisterEvent("CHAT_MSG_GUILD")
@@ -336,10 +385,10 @@ function RE:EndScan()
 	RE.AHButton:SetText(L["Scan finished!"])
 	PlaySound(_G.SOUNDKIT.AUCTION_WINDOW_CLOSE)
 	print("|cFF9D9D9D---|r |cFF74D06CRE|rCrystallize "..LANDING_PAGE_REPORT.." |cFF9D9D9D---|r")
-	print(L["Scan time"]..": "..SecondsToTime(time() - RE.Config.LastScan))
-	print(L["New items"]..": "..RE.ScanStats[1])
-	print(L["Updated items"]..": "..RE.ScanStats[2])
-	print(L["Removed items"]..": "..RE.ScanStats[3])
+	print("|cFF74D06C"..L["Scan time"]..":|r "..SecondsToTime(time() - RE.Config.LastScan))
+	print("|cFF74D06C"..L["New items"]..":|r "..RE.ScanStats[1])
+	print("|cFF74D06C"..L["Updated items"]..":|r "..RE.ScanStats[2])
+	print("|cFF74D06C"..L["Removed items"]..":|r "..RE.ScanStats[3])
 end
 
 function RE:ParseDatabase()
