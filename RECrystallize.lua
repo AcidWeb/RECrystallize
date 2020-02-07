@@ -417,3 +417,33 @@ function RE:GetCheapestVariant(items)
 	end
 	return target
 end
+
+-- API
+
+function RECrystallize_PriceCheck(link)
+	if link then
+		local itemID
+		local variant
+		local partial = false
+
+		if IsLinkType(link, "item") then
+			itemID = tonumber(sMatch(link, "item:(%d+)"))
+			variant = RE:GetItemString(link)
+		elseif IsLinkType(link, "battlepet") then
+			itemID = PETCAGEID
+			variant = RE:GetPetString(link)
+		else
+			return
+		end
+
+		if RE.DB[RE.RealmString][itemID] ~= nil then
+			if itemID ~= PETCAGEID and RE.DB[RE.RealmString][itemID][variant] == nil then
+				variant = RE:GetCheapestVariant(RE.DB[RE.RealmString][itemID])
+				partial = true
+			end
+			if RE.DB[RE.RealmString][itemID][variant] ~= nil then
+				return RE.DB[RE.RealmString][itemID][variant].Price, RE.DB[RE.RealmString][itemID][variant].LastSeen, partial
+			end
+		end
+	end
+end
