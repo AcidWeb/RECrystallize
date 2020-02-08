@@ -7,9 +7,6 @@ _G.RECrystallize = RE
 local time, collectgarbage, hooksecurefunc, strsplit, next, select, pairs, tonumber, floor, print = _G.time, _G.collectgarbage, _G.hooksecurefunc, _G.strsplit, _G.next, _G.select, _G.pairs, _G.tonumber, _G.floor, _G.print
 local sMatch, sFormat = _G.string.match, _G.string.format
 local tConcat = _G.table.concat
-local IsLinkType = _G.LinkUtil.IsLinkType
-local ExtractLink = _G.LinkUtil.ExtractLink
-local After = _G.C_Timer.After
 local Round = _G.Round
 local PlaySound = _G.PlaySound
 local GetItemInfo = _G.GetItemInfo
@@ -20,6 +17,9 @@ local IsShiftKeyDown = _G.IsShiftKeyDown
 local SendChatMessage = _G.SendChatMessage
 local SetTooltipMoney = _G.SetTooltipMoney
 local FormatLargeNumber = _G.FormatLargeNumber
+local After = _G.C_Timer.After
+local IsLinkType = _G.LinkUtil.IsLinkType
+local ExtractLink = _G.LinkUtil.ExtractLink
 local ReplicateItems = _G.C_AuctionHouse.ReplicateItems
 local GetNumReplicateItems = _G.C_AuctionHouse.GetNumReplicateItems
 local GetReplicateItemInfo = _G.C_AuctionHouse.GetReplicateItemInfo
@@ -42,6 +42,7 @@ RE.TooltipIcon = ""
 RE.TooltipItemID = 0
 RE.TooltipCount = 0
 RE.TooltipCustomCount = -1
+
 RE.AceConfig = {
 	type = "group",
 	args = {
@@ -318,7 +319,7 @@ function RE:TooltipPetAddPrice(link)
 end
 
 function RE:HandleButton(mode)
-	if mode == _G.AuctionHouseFrameDisplayMode.Buy then
+	if mode == _G.AuctionHouseFrameDisplayMode.Buy or mode == _G.AuctionHouseFrameDisplayMode.ItemBuy or mode == _G.AuctionHouseFrameDisplayMode.CommoditiesBuy then
 		RE.AHButton.frame:Show()
 	else
 		RE.AHButton.frame:Hide()
@@ -356,7 +357,7 @@ function RE:Scan()
 	RE.AHButton:SetText(count.." / "..num)
 	payloadDiff = count - payloadDiff
 	if payloadDiff > 0 then
-		After(0.01, RE.Scan)
+		After(0.25, RE.Scan)
 	else
 		RE:EndScan()
 	end
