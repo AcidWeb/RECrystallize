@@ -32,7 +32,7 @@ local ElvUI = _G.ElvUI
 
 local PETCAGEID = 82800
 
-RE.DefaultConfig = {["LastScan"] = 0, ["GuildChatPC"] = false, ["DatabaseCleanup"] = 432000, ["ScanPulse"] = 1, ["AlwaysShowAll"] = false, ["DatabaseVersion"] = 1}
+RE.DefaultConfig = {["LastScan"] = 0, ["GuildChatPC"] = false, ["DatabaseCleanup"] = 432000, ["AlwaysShowAll"] = false, ["DatabaseVersion"] = 1}
 RE.GUIInitialized = false
 RE.RecipeLock = false
 RE.BlockTooltip = 0
@@ -66,24 +66,12 @@ RE.AceConfig = {
 			set = function(_, val) RE.Config.DatabaseCleanup = val * 86400 end,
 			get = function(_) return RE.Config.DatabaseCleanup / 86400 end
 		},
-		scanpulse = {
-			name = L["Scanning speed"],
-			desc = L["Setting this value lower might speed up the scanning process but also can cause disconnects."],
-			type = "range",
-			width = "double",
-			order = 3,
-			min = 0.1,
-			max = 2,
-			step = 0.1,
-			set = function(_, val) RE.Config.ScanPulse = val end,
-			get = function(_) return RE.Config.ScanPulse end
-		},
 		dbpurge = {
 			name = L["Purge this server database"],
 			desc = L["WARNING! This operation is not reversible!"],
 			type = "execute",
 			width = "double",
-			order = 4,
+			order = 3,
 			confirm = true,
 			func = function() RE.DB[RE.RealmString] = {}; collectgarbage("collect") end
 		},
@@ -368,7 +356,7 @@ function RE:Scan()
 	RE.AHButton:SetText(count.." / "..num)
 	payloadDiff = count - payloadDiff
 	if payloadDiff > 0 then
-		After(RE.Config.ScanPulse, RE.Scan)
+		After(0.01, RE.Scan)
 	else
 		RE:EndScan()
 	end
