@@ -484,3 +484,13 @@ function RECrystallize_PriceCheck(link)
 		end
 	end
 end
+
+function RECrystallize_PriceCheckItemID(itemID)
+	if type(itemID) == "number" then
+		local variant = RE:GetCheapestVariant(RE.DB[RE.RealmString][itemID])
+
+		if RE.DB[RE.RealmString][itemID][variant] ~= nil then
+			return RE.DB[RE.RealmString][itemID][variant].Price, RE.DB[RE.RealmString][itemID][variant].LastSeen
+		end
+	end
+end
