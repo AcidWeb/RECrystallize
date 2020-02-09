@@ -32,7 +32,7 @@ local ElvUI = _G.ElvUI
 
 local PETCAGEID = 82800
 
-RE.DefaultConfig = {["LastScan"] = 0, ["GuildChatPC"] = false, ["DatabaseCleanup"] = 432000, ["AlwaysShowAll"] = false, ["DatabaseVersion"] = 1}
+RE.DefaultConfig = {["LastScan"] = 0, ["GuildChatPC"] = false, ["DatabaseCleanup"] = 432000, ["AlwaysShowAll"] = false, ["SlowScan"] = false, ["DatabaseVersion"] = 1}
 RE.GUIInitialized = false
 RE.RecipeLock = false
 RE.BlockTooltip = 0
@@ -55,12 +55,21 @@ RE.AceConfig = {
 			set = function(_, val) RE.Config.AlwaysShowAll = val end,
 			get = function(_) return RE.Config.AlwaysShowAll end
 		},
+		slowscan = {
+			name = L["Enable slow scanning"],
+			desc = L["Enable this option if scanning is causing disconnects."],
+			type = "toggle",
+			width = "full",
+			order = 2,
+			set = function(_, val) RE.Config.SlowScan = val end,
+			get = function(_) return RE.Config.SlowScan end
+		},
 		dbcleanup = {
 			name = L["Data freshness"],
 			desc = L["The number of days after which old data will be deleted."],
 			type = "range",
 			width = "double",
-			order = 2,
+			order = 3,
 			min = 1,
 			max = 14,
 			step = 1,
@@ -72,7 +81,7 @@ RE.AceConfig = {
 			desc = L["WARNING! This operation is not reversible!"],
 			type = "execute",
 			width = "double",
-			order = 3,
+			order = 4,
 			confirm = true,
 			func = function() RE.DB[RE.RealmString] = {}; collectgarbage("collect") end
 		},
@@ -357,7 +366,7 @@ function RE:Scan()
 	RE.AHButton:SetText(count.." / "..num)
 	payloadDiff = count - payloadDiff
 	if payloadDiff > 0 then
-		After(0.25, RE.Scan)
+		After(RE.Config.SlowScan and 1 or 0.25, RE.Scan)
 	else
 		RE:EndScan()
 	end
