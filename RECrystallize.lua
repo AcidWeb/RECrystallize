@@ -238,6 +238,10 @@ function RE:OnEvent(self, event, ...)
 			self:RegisterEvent("CHAT_MSG_GUILD")
 		end
 
+		if RE.Config.LastScan > time() then
+			RE.Config.LastScan = time()
+		end
+
 		_G.GameTooltip:HookScript("OnTooltipSetItem", function(self) RE:TooltipAddPrice(self); RE.TooltipCustomCount = -1 end)
 		_G.GameTooltip:HookScript("OnTooltipCleared", function(_) RE.RecipeLock = false end)
 		hooksecurefunc("BattlePetToolTip_Show", function(speciesID, level, breedQuality, maxHealth, power, speed) RE:TooltipPetAddPrice(sFormat("|cffffffff|Hbattlepet:%s:%s:%s:%s:%s:%s:0000000000000000:0|h[XYZ]|h|r", speciesID, level, breedQuality, maxHealth, power, speed)) end)
