@@ -401,6 +401,10 @@ function RE:Scan()
 			end)
 		end
 	end
+
+	if not next(inProgress) then
+		RE:EndScan()
+	end
 end
 
 function RE:EndScan()
