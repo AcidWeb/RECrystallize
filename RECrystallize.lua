@@ -44,13 +44,6 @@ RE.TooltipItemID = 0
 RE.TooltipCount = 0
 RE.TooltipCustomCount = -1
 
-local function ElvUISwag(sender)
-	if sender == "Livarax-BurningLegion" then
-		return [[|TInterface\PvPRankBadges\PvPRank09:0|t ]]
-	end
-	return nil
-end
-
 local function tCount(table)
 	local count = 0
 	for _ in pairs(table) do
@@ -277,7 +270,6 @@ function RE:OnEvent(self, event, ...)
 
 		if ElvUI then
 			RE.IsSkinned = ElvUI[1].private.skins.blizzard.auctionhouse
-			ElvUI[1]:GetModule("Chat"):AddPluginIcons(ElvUISwag)
 		else
 			RE.IsSkinned = false
 		end
