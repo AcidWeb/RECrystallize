@@ -8,6 +8,7 @@
 ## X-Curse-Project-ID: 359808
 ## X-WoWI-ID: 25496
 
+TaintLess.xml
 Embeds.xml
 Locale\Locale.xml
 RECrystallize.xml
