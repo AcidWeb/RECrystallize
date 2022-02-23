@@ -4,8 +4,6 @@
 ## Version: 1.10.4
 ## Author: AcidWeb
 ## SavedVariables: RECrystallizeSettings, RECrystallizeDatabase
-## X-Website: https://www.curseforge.com/wow/addons/recrystallize-auction-house-scanner
-## X-Curse-Project-ID: 359808
 ## X-WoWI-ID: 25496
 ## X-Wago-ID: 9rN4JdKD
 

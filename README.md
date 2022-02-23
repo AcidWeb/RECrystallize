@@ -1,6 +1,6 @@
 # RECrystallize
 
-[Curse](https://www.curseforge.com/wow/addons/recrystallize-auction-house-scanner)
+[Wago Addons](https://addons.wago.io/addons/recrystallize-auction-house-scanner)
 
 [WoWInterface](https://www.wowinterface.com/downloads/info25496-RECrystallize-AuctionHouseScanner)
 
@@ -8,4 +8,4 @@
 
 All Rights Reserved unless otherwise explicitly stated.
 
-Copyright (c) 2020 Paweł Jastrzębski <pawelj@iosphe.re>
+Copyright (c) 2020-2022 Paweł Jastrzębski <pawelj@iosphe.re>
