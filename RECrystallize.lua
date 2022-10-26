@@ -255,6 +255,7 @@ function RE:OnEvent(self, event, ...)
 		hooksecurefunc("BattlePetToolTip_Show", function(speciesID, level, breedQuality, maxHealth, power, speed) RE:TooltipPetAddPrice(sFormat("|cffffffff|Hbattlepet:%s:%s:%s:%s:%s:%s:0000000000000000:0|h[XYZ]|h|r", speciesID, level, breedQuality, maxHealth, power, speed)) end)
 		hooksecurefunc("FloatingBattlePet_Show", function(speciesID, level, breedQuality, maxHealth, power, speed) RE:TooltipPetAddPrice(sFormat("|cffffffff|Hbattlepet:%s:%s:%s:%s:%s:%s:0000000000000000:0|h[XYZ]|h|r", speciesID, level, breedQuality, maxHealth, power, speed)) end)
 
+		--[[
 		local SetRecipeReagentItem = _G.GameTooltip.SetRecipeReagentItem
 		function _G.GameTooltip:SetRecipeReagentItem(...)
 			local link = GetRecipeReagentItemLink(...)
@@ -269,6 +270,7 @@ function RE:OnEvent(self, event, ...)
 			if link then return self:SetHyperlink(link) end
 			return SetRecipeResultItem(self, ...)
 		end
+		]]--
 
 		if ElvUI then
 			RE.IsSkinned = ElvUI[1].private.skins.blizzard.auctionhouse
@@ -376,24 +378,26 @@ function RE:Scan()
 			end
 		else
 			local item = Item:CreateFromItemID(itemID)
-			inProgress[item] = true
+			if not item:IsItemEmpty() then
+				inProgress[item] = true
 
-			item:ContinueOnItemLoad(function()
-				count, quality, _, _, _, _, _, price, _, _, _, _, _, _, itemID, status = select(3, GetReplicateItemInfo(i))
-				inProgress[item] = nil
-				if status and count and price and itemID and type(quality) == "number" and count > 0 and price > 0 and itemID > 0 then
-					link = GetReplicateItemLink(i)
-					if link then
-						progress = progress + 1
-						RE.AHButton:SetText(progress.." / "..num)
-						RE.DBScan[i] = {["Price"] = price / count, ["ItemID"] = itemID, ["ItemLink"] = link, ["Quality"] = quality}
+				item:ContinueOnItemLoad(function()
+					count, quality, _, _, _, _, _, price, _, _, _, _, _, _, itemID, status = select(3, GetReplicateItemInfo(i))
+					inProgress[item] = nil
+					if status and count and price and itemID and type(quality) == "number" and count > 0 and price > 0 and itemID > 0 then
+						link = GetReplicateItemLink(i)
+						if link then
+							progress = progress + 1
+							RE.AHButton:SetText(progress.." / "..num)
+							RE.DBScan[i] = {["Price"] = price / count, ["ItemID"] = itemID, ["ItemLink"] = link, ["Quality"] = quality}
+						end
 					end
-				end
-				if not next(inProgress) then
-					inProgress = {}
-					RE:EndScan()
-				end
-			end)
+					if not next(inProgress) then
+						inProgress = {}
+						RE:EndScan()
+					end
+				end)
+			end
 		end
 	end
 
