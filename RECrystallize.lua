@@ -25,10 +25,9 @@ local ReplicateItems = _G.C_AuctionHouse.ReplicateItems
 local GetNumReplicateItems = _G.C_AuctionHouse.GetNumReplicateItems
 local GetReplicateItemInfo = _G.C_AuctionHouse.GetReplicateItemInfo
 local GetReplicateItemLink = _G.C_AuctionHouse.GetReplicateItemLink
-local GetRecipeItemLink = _G.C_TradeSkillUI.GetRecipeItemLink
-local GetRecipeReagentInfo = _G.C_TradeSkillUI.GetRecipeReagentInfo
-local GetRecipeReagentItemLink = _G.C_TradeSkillUI.GetRecipeReagentItemLink
-local GetRecipeNumItemsProduced = _G.C_TradeSkillUI.GetRecipeNumItemsProduced
+local GetRecipeSchematic = _G.C_TradeSkillUI.GetRecipeSchematic
+local AddTooltipPreCall = _G.TooltipDataProcessor.AddTooltipPreCall
+local AddTooltipPostCall = _G.TooltipDataProcessor.AddTooltipPostCall
 local ElvUI = _G.ElvUI
 
 local PETCAGEID = 82800
@@ -44,6 +43,7 @@ RE.TooltipIcon = ""
 RE.TooltipItemID = 0
 RE.TooltipCount = 0
 RE.TooltipCustomCount = -1
+RE.TooltipRecipe = {}
 
 local function tCount(table)
 	local count = 0
@@ -250,27 +250,31 @@ function RE:OnEvent(self, event, ...)
 			RE.Config.LastScan = time()
 		end
 
-		_G.GameTooltip:HookScript("OnTooltipSetItem", function(self) RE:TooltipAddPrice(self); RE.TooltipCustomCount = -1 end)
+		local function RecipePreHook(tt, _)
+			if tt:IsForbidden() then return end
+			if not tt.RECrystallizeHook then
+				tt.RECrystallizeHook = true
+				local SetRecipeReagentItem = tt.SetRecipeReagentItem
+				function tt:SetRecipeReagentItem(...)
+					local recipe, reagent = ...
+					RE.TooltipRecipe = GetRecipeSchematic(recipe, false)
+					RE.TooltipCustomCount = RE.TooltipRecipe.reagentSlotSchematics[reagent].quantityRequired
+					return SetRecipeReagentItem(self, ...)
+				end
+				local SetRecipeResultItem = tt.SetRecipeResultItem
+				function tt:SetRecipeResultItem(...)
+					RE.TooltipRecipe = GetRecipeSchematic(..., false)
+					RE.TooltipCustomCount = RE.TooltipRecipe.quantityMin
+					return SetRecipeResultItem(self, ...)
+				end
+			end
+		end
+		AddTooltipPreCall(Enum.TooltipDataType.Item, RecipePreHook)
+		AddTooltipPostCall(Enum.TooltipDataType.Item, function (tt, data) RE:TooltipAddPrice(tt, data); RE.TooltipCustomCount = -1 end)
 		_G.GameTooltip:HookScript("OnTooltipCleared", function(_) RE.RecipeLock = false end)
+
 		hooksecurefunc("BattlePetToolTip_Show", function(speciesID, level, breedQuality, maxHealth, power, speed) RE:TooltipPetAddPrice(sFormat("|cffffffff|Hbattlepet:%s:%s:%s:%s:%s:%s:0000000000000000:0|h[XYZ]|h|r", speciesID, level, breedQuality, maxHealth, power, speed)) end)
 		hooksecurefunc("FloatingBattlePet_Show", function(speciesID, level, breedQuality, maxHealth, power, speed) RE:TooltipPetAddPrice(sFormat("|cffffffff|Hbattlepet:%s:%s:%s:%s:%s:%s:0000000000000000:0|h[XYZ]|h|r", speciesID, level, breedQuality, maxHealth, power, speed)) end)
-
-		--[[
-		local SetRecipeReagentItem = _G.GameTooltip.SetRecipeReagentItem
-		function _G.GameTooltip:SetRecipeReagentItem(...)
-			local link = GetRecipeReagentItemLink(...)
-			RE.TooltipCustomCount = select(3, GetRecipeReagentInfo(...))
-			if link then return self:SetHyperlink(link) end
-			return SetRecipeReagentItem(self, ...)
-		end
-		local SetRecipeResultItem = _G.GameTooltip.SetRecipeResultItem
-		function _G.GameTooltip:SetRecipeResultItem(...)
-			local link = GetRecipeItemLink(...)
-			RE.TooltipCustomCount = GetRecipeNumItemsProduced(...)
-			if link then return self:SetHyperlink(link) end
-			return SetRecipeResultItem(self, ...)
-		end
-		]]--
 
 		if ElvUI then
 			RE.IsSkinned = ElvUI[1].private.skins.blizzard.auctionhouse
@@ -282,9 +286,9 @@ function RE:OnEvent(self, event, ...)
 	end
 end
 
-function RE:TooltipAddPrice(self)
+function RE:TooltipAddPrice(self, data)
 	if self:IsForbidden() then return end
-	local _, link = self:GetItem()
+	local link = self.GetItem and select(2, self:GetItem()) or data.hyperlink
 	if link and IsLinkType(link, "item") then
 		local itemTypeId, itemSubTypeId = select(12, GetItemInfo(link))
 		if not RE.RecipeLock and itemTypeId == _G.LE_ITEM_CLASS_RECIPE and itemSubTypeId ~= _G.LE_ITEM_RECIPE_BOOK then
