@@ -98,8 +98,12 @@ function RE:OnEvent(self, event, ...)
 			if RE.DB[RE.RealmString][itemID] ~= nil then
 				local suffix = ""
 				if RE.DB[RE.RealmString][itemID][itemStr] == nil then
-					itemStr = RE:GetCheapestVariant(RE.DB[RE.RealmString][itemID])
-					suffix = " - Partial match!"
+					if RE.DB[RE.RealmString][itemID]["::::::::"] ~= nil then
+						itemStr = "::::::::"
+					else
+						itemStr = RE:GetCheapestVariant(RE.DB[RE.RealmString][itemID])
+						suffix = " - Partial match!"
+					end
 				end
 				if RE.DB[RE.RealmString][itemID][itemStr] ~= nil then
 					local pc = "[PC]"
@@ -307,8 +311,12 @@ function RE:TooltipAddPrice(self, data)
 		if RE.BlockTooltip == RE.TooltipItemID then return end
 		if RE.DB[RE.RealmString][RE.TooltipItemID] ~= nil then
 			if RE.DB[RE.RealmString][RE.TooltipItemID][RE.TooltipItemVariant] == nil then
-				RE.TooltipItemVariant = RE:GetCheapestVariant(RE.DB[RE.RealmString][RE.TooltipItemID])
-				RE.TooltipIcon = " |TInterface\\AddOns\\RECrystallize\\Icons\\Warning:8|t"
+				if RE.DB[RE.RealmString][RE.TooltipItemID]["::::::::"] ~= nil then
+					RE.TooltipItemVariant = "::::::::"
+				else
+					RE.TooltipItemVariant = RE:GetCheapestVariant(RE.DB[RE.RealmString][RE.TooltipItemID])
+					RE.TooltipIcon = " |TInterface\\AddOns\\RECrystallize\\Icons\\Warning:8|t"
+				end
 			end
 			if RE.DB[RE.RealmString][RE.TooltipItemID][RE.TooltipItemVariant] ~= nil then
 				local shiftPressed = IsShiftKeyDown()
@@ -526,8 +534,12 @@ function RECrystallize_PriceCheck(link)
 
 		if RE.DB[RE.RealmString][itemID] ~= nil then
 			if itemID ~= PETCAGEID and RE.DB[RE.RealmString][itemID][variant] == nil then
-				variant = RE:GetCheapestVariant(RE.DB[RE.RealmString][itemID])
-				partial = true
+				if RE.DB[RE.RealmString][itemID]["::::::::"] ~= nil then
+					variant = "::::::::"
+				else
+					variant = RE:GetCheapestVariant(RE.DB[RE.RealmString][itemID])
+					partial = true
+				end
 			end
 			if RE.DB[RE.RealmString][itemID][variant] ~= nil then
 				return RE.DB[RE.RealmString][itemID][variant].Price, RE.DB[RE.RealmString][itemID][variant].LastSeen, partial
