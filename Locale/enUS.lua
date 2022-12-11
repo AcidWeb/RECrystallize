@@ -20,3 +20,4 @@ L["Now"] = true
 L["Items in database"] = true
 L["Scanning speed"] = true
 L["Decrease this value if scanning is causing disconnects."] = true
+L["Access to AH data takes longer than usual. This may be caused by server overload."] = true

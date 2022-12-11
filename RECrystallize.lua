@@ -11,6 +11,7 @@ local Item = _G.Item
 local Round = _G.Round
 local PlaySound = _G.PlaySound
 local GetCVar = _G.GetCVar
+local NewTicker = _G.C_Timer.NewTicker
 local GetItemInfo = _G.GetItemInfo
 local GetItemCount = _G.GetItemCount
 local GetRealmName = _G.GetRealmName
@@ -80,6 +81,9 @@ end
 
 function RE:OnEvent(self, event, ...)
 	if event == "REPLICATE_ITEM_LIST_UPDATE" then
+		if RE.WarningTimer then
+			RE.WarningTimer:Cancel()
+		end
 		self:UnregisterEvent("REPLICATE_ITEM_LIST_UPDATE")
 		RE:Scan()
 	elseif event == "CHAT_MSG_GUILD" then
@@ -166,6 +170,9 @@ function RE:OnEvent(self, event, ...)
 		end
 	elseif event == "AUCTION_HOUSE_CLOSED" then
 		RE.BlockTooltip = 0
+		if RE.WarningTimer then
+			RE.WarningTimer:Cancel()
+		end
 	elseif event == "ADDON_LOADED" and ... == "RECrystallize" then
 		if not _G.RECrystallizeDatabase then
 			_G.RECrystallizeDatabase = {}
@@ -351,6 +358,7 @@ function RE:StartScan()
 	RE.AHButton:SetText(L["Waiting..."])
 	RE.AHButton:SetDisabled(true)
 	_G.RECrystallizeFrame:RegisterEvent("REPLICATE_ITEM_LIST_UPDATE")
+	RE.WarningTimer = NewTicker(30, function() print("|cFF9D9D9D[|r|cFF74D06CRE|rCrystallize|cFF9D9D9D]|r "..L["Access to AH data takes longer than usual. This may be caused by server overload."]) end)
 	ReplicateItems()
 end
 
