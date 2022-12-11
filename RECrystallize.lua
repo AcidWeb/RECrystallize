@@ -25,8 +25,6 @@ local ReplicateItems = _G.C_AuctionHouse.ReplicateItems
 local GetNumReplicateItems = _G.C_AuctionHouse.GetNumReplicateItems
 local GetReplicateItemInfo = _G.C_AuctionHouse.GetReplicateItemInfo
 local GetReplicateItemLink = _G.C_AuctionHouse.GetReplicateItemLink
-local GetRecipeSchematic = _G.C_TradeSkillUI.GetRecipeSchematic
-local AddTooltipPreCall = _G.TooltipDataProcessor.AddTooltipPreCall
 local AddTooltipPostCall = _G.TooltipDataProcessor.AddTooltipPostCall
 local ElvUI = _G.ElvUI
 
@@ -254,31 +252,12 @@ function RE:OnEvent(self, event, ...)
 			RE.Config.LastScan = time()
 		end
 
-		local function RecipePreHook(tt, _)
-			if tt:IsForbidden() then return end
-			if not tt.RECrystallizeHook then
-				tt.RECrystallizeHook = true
-				local SetRecipeReagentItem = tt.SetRecipeReagentItem
-				function tt:SetRecipeReagentItem(...)
-					local recipe, reagent = ...
-					RE.TooltipRecipe = GetRecipeSchematic(recipe, false)
-					RE.TooltipCustomCount = RE.TooltipRecipe.reagentSlotSchematics[reagent].quantityRequired
-					return SetRecipeReagentItem(self, ...)
-				end
-				local SetRecipeResultItem = tt.SetRecipeResultItem
-				function tt:SetRecipeResultItem(...)
-					RE.TooltipRecipe = GetRecipeSchematic(..., false)
-					RE.TooltipCustomCount = RE.TooltipRecipe.quantityMin
-					return SetRecipeResultItem(self, ...)
-				end
-			end
-		end
-		AddTooltipPreCall(Enum.TooltipDataType.Item, RecipePreHook)
-		AddTooltipPostCall(Enum.TooltipDataType.Item, function (tt, data) RE:TooltipAddPrice(tt, data); RE.TooltipCustomCount = -1 end)
+		AddTooltipPostCall(Enum.TooltipDataType.Item, function(tt, data) RE:TooltipAddPrice(tt, data); RE.TooltipCustomCount = -1 end)
 		_G.GameTooltip:HookScript("OnTooltipCleared", function(_) RE.RecipeLock = false end)
 
 		hooksecurefunc("BattlePetToolTip_Show", function(speciesID, level, breedQuality, maxHealth, power, speed) RE:TooltipPetAddPrice(sFormat("|cffffffff|Hbattlepet:%s:%s:%s:%s:%s:%s:0000000000000000:0|h[XYZ]|h|r", speciesID, level, breedQuality, maxHealth, power, speed)) end)
 		hooksecurefunc("FloatingBattlePet_Show", function(speciesID, level, breedQuality, maxHealth, power, speed) RE:TooltipPetAddPrice(sFormat("|cffffffff|Hbattlepet:%s:%s:%s:%s:%s:%s:0000000000000000:0|h[XYZ]|h|r", speciesID, level, breedQuality, maxHealth, power, speed)) end)
+		hooksecurefunc(_G.Professions, "FlyoutOnElementEnterImplementation", function(data, tt) RE:TooltipAddPrice(tt, data.item); RE.TooltipCustomCount = -1 end)
 
 		if ElvUI then
 			RE.IsSkinned = ElvUI[1].private.skins.blizzard.auctionhouse
@@ -292,7 +271,7 @@ end
 
 function RE:TooltipAddPrice(self, data)
 	if self:IsForbidden() then return end
-	local link = self.GetItem and select(2, self:GetItem()) or data.hyperlink
+	local link = self.GetItem and select(2, self:GetItem()) or (data.GetItemLink and data:GetItemLink() or data.hyperlink)
 	if link and IsLinkType(link, "item") then
 		local itemTypeId, itemSubTypeId = select(12, GetItemInfo(link))
 		if not RE.RecipeLock and itemTypeId == _G.LE_ITEM_CLASS_RECIPE and itemSubTypeId ~= _G.LE_ITEM_RECIPE_BOOK then
@@ -300,6 +279,10 @@ function RE:TooltipAddPrice(self, data)
 			return
 		else
 			RE.RecipeLock = false
+		end
+		local owner = self:GetOwner():GetParent()
+		if owner.reagentSlotSchematic then
+			RE.TooltipCustomCount = owner.reagentSlotSchematic.quantityRequired
 		end
 		if link ~= RE.TooltipLink then
 			RE.TooltipLink = link
