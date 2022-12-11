@@ -287,9 +287,12 @@ function RE:TooltipAddPrice(self, data)
 		else
 			RE.RecipeLock = false
 		end
-		local owner = self:GetOwner():GetParent()
-		if owner.reagentSlotSchematic then
-			RE.TooltipCustomCount = owner.reagentSlotSchematic.quantityRequired
+		local owner = self:GetOwner()
+		if owner then
+			owner = owner:GetParent()
+			if owner and owner.reagentSlotSchematic and owner.reagentSlotSchematic.quantityRequired then
+				RE.TooltipCustomCount = owner.reagentSlotSchematic.quantityRequired
+			end
 		end
 		if link ~= RE.TooltipLink then
 			RE.TooltipLink = link

@@ -1,7 +1,7 @@
 ## Interface: 100002
 ## Title: |cFF74D06CRE|rCrystallize
 ## Notes: Provide Auction House scanner and add item prices to tooltips.
-## Version: 1.12.0
+## Version: 1.12.1
 ## Author: AcidWeb
 ## SavedVariables: RECrystallizeSettings, RECrystallizeDatabase
 ## X-WoWI-ID: 25496
