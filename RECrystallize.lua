@@ -4,7 +4,7 @@ local L = LibStub("AceLocale-3.0"):GetLocale("RECrystallize")
 local GUI = LibStub("AceGUI-3.0")
 _G.RECrystallize = RE
 
-local time, collectgarbage, hooksecurefunc, strsplit, next, select, pairs, tonumber, floor, print, date = _G.time, _G.collectgarbage, _G.hooksecurefunc, _G.strsplit, _G.next, _G.select, _G.pairs, _G.tonumber, _G.floor, _G.print, _G.date
+local time, collectgarbage, hooksecurefunc, next, select, pairs, tonumber, floor, print, date = _G.time, _G.collectgarbage, _G.hooksecurefunc, _G.next, _G.select, _G.pairs, _G.tonumber, _G.floor, _G.print, _G.date
 local sMatch, sFormat = _G.string.match, _G.string.format
 local tConcat = _G.table.concat
 local Item = _G.Item
@@ -489,7 +489,7 @@ end
 
 function RE:GetItemString(link)
 	local raw = select(2, ExtractLink(link))
-	return select(11, strsplit(":", raw, 11))
+	return sMatch(gsub(raw, "Player-.*-.*:", ":"), "^.-:.-:.-:.-:.-:.-:.-:.-:.-:.-:(.*)")
 end
 
 function RE:GetPetString(link)
