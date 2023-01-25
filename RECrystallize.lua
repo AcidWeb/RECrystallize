@@ -385,9 +385,7 @@ function RE:Scan()
 		else
 			local item = Item:CreateFromItemID(itemID)
 			if not item:IsItemEmpty() then
-				inProgress[item] = true
-
-				item:ContinueOnItemLoad(function()
+				inProgress[item] = item:ContinueWithCancelOnItemLoad(function()
 					count, quality, _, _, _, _, _, price, _, _, _, _, _, _, itemID, status = select(3, GetReplicateItemInfo(i))
 					inProgress[item] = nil
 					if status and count and price and itemID and type(quality) == "number" and count > 0 and price > 0 and itemID > 0 then
@@ -409,12 +407,25 @@ function RE:Scan()
 
 	if not next(inProgress) then
 		RE:EndScan()
+	else
+		RE.TimeoutTimer = NewTicker(15, function()
+			for _, v in pairs(inProgress) do
+				v()
+			end
+			inProgress = {}
+			RE:EndScan()
+		end, 1)
 	end
 end
 
 function RE:EndScan()
 	if RE.ScanFinished then return end
 	RE.ScanFinished = true
+
+	if RE.TimeoutTimer then
+		RE.TimeoutTimer:Cancel()
+		RE.TimeoutTimer = nil
+	end
 
 	RE:ParseDatabase()
 	RE:SyncDatabase()
