@@ -26,6 +26,7 @@ local ReplicateItems = _G.C_AuctionHouse.ReplicateItems
 local GetNumReplicateItems = _G.C_AuctionHouse.GetNumReplicateItems
 local GetReplicateItemInfo = _G.C_AuctionHouse.GetReplicateItemInfo
 local GetReplicateItemLink = _G.C_AuctionHouse.GetReplicateItemLink
+local TransmogGetItemInfo = _G.C_TransmogCollection.GetItemInfo
 local AddTooltipPostCall = _G.TooltipDataProcessor.AddTooltipPostCall
 local ElvUI = _G.ElvUI
 
@@ -445,7 +446,7 @@ end
 
 function RE:ParseDatabase()
 	for _, offer in pairs(RE.DBScan) do
-		if offer.Quality > 0 then
+		if offer.Quality > 0 or TransmogGetItemInfo(offer.ItemID) then
 			local itemStr
 			if IsLinkType(offer.ItemLink, "battlepet") then
 				itemStr = RE:GetPetString(offer.ItemLink)
