@@ -26,13 +26,14 @@ local ReplicateItems = _G.C_AuctionHouse.ReplicateItems
 local GetNumReplicateItems = _G.C_AuctionHouse.GetNumReplicateItems
 local GetReplicateItemInfo = _G.C_AuctionHouse.GetReplicateItemInfo
 local GetReplicateItemLink = _G.C_AuctionHouse.GetReplicateItemLink
+local GetItemMaxStackSizeByID = _G.C_Item.GetItemMaxStackSizeByID
 local TransmogGetItemInfo = _G.C_TransmogCollection.GetItemInfo
 local AddTooltipPostCall = _G.TooltipDataProcessor.AddTooltipPostCall
 local ElvUI = _G.ElvUI
 
 local PETCAGEID = 82800
 
-RE.DefaultConfig = {["LastScan"] = 0, ["GuildChatPC"] = false, ["DatabaseCleanup"] = 432000, ["AlwaysShowAll"] = false, ["DatabaseVersion"] = 1}
+RE.DefaultConfig = {["LastScan"] = 0, ["GuildChatPC"] = false, ["DatabaseCleanup"] = 432000, ["AlwaysShowAll"] = false, ["DatabaseVersion"] = 2}
 RE.GUIInitialized = false
 RE.RecipeLock = false
 RE.ScanFinished = false
@@ -44,6 +45,8 @@ RE.TooltipItemID = 0
 RE.TooltipCount = 0
 RE.TooltipCustomCount = -1
 RE.TooltipRecipe = {}
+RE.CurrentRecord = {}
+RE.BonusIDCache = {}
 
 local function tCount(table)
 	local count = 0
@@ -90,28 +93,25 @@ function RE:OnEvent(self, event, ...)
 	elseif event == "CHAT_MSG_GUILD" then
 		local msg = ...
 		if sMatch(msg, "^!!!") then
-			local itemID, itemStr = 0, ""
+			local itemID, itemVariant = 0, ""
 			if IsLinkType(msg, "item") then
 				itemID = tonumber(sMatch(msg, "item:(%d+)"))
-				itemStr = RE:GetItemString(msg)
+				itemVariant = RE:GetItemString(msg)
 			elseif IsLinkType(msg, "battlepet") then
 				itemID = PETCAGEID
-				itemStr = RE:GetPetString(msg)
+				itemVariant = RE:GetPetString(msg)
 			end
-			if RE.DB[RE.RealmString][itemID] ~= nil then
+			RE.CurrentRecord = RE:GetDBRecord(itemID)
+			if RE.CurrentRecord ~= nil then
 				local suffix = ""
-				if RE.DB[RE.RealmString][itemID][itemStr] == nil then
-					if RE.DB[RE.RealmString][itemID]["::::::::"] ~= nil then
-						itemStr = "::::::::"
-					else
-						itemStr = RE:GetCheapestVariant(RE.DB[RE.RealmString][itemID])
-						suffix = " - Partial match!"
-					end
+				if RE.CurrentRecord[itemVariant] == nil then
+					itemVariant = RE:GetCheapestVariant(RE.CurrentRecord)
+					suffix = " - Partial match"
 				end
-				if RE.DB[RE.RealmString][itemID][itemStr] ~= nil then
+				if RE.CurrentRecord[itemVariant] ~= nil then
 					local pc = "[PC]"
-					local price = RE.DB[RE.RealmString][itemID][itemStr].Price
-					local scanTime = Round((time() - RE.DB[RE.RealmString][itemID][itemStr].LastSeen) / 60 / 60)
+					local price = RE.CurrentRecord[itemVariant].Price
+					local scanTime = Round((time() - RE.CurrentRecord[itemVariant].LastSeen) / 60 / 60)
 					local g = floor(price / 100 / 100)
 					local s = floor((price / 100) % 100)
 					if g > 0 then
@@ -127,10 +127,10 @@ function RE:OnEvent(self, event, ...)
 					end
 					SendChatMessage(pc..suffix, "GUILD")
 				else
-					SendChatMessage("[PC] Never seen it on AH.", "GUILD")
+					SendChatMessage("[PC] Item not found in AH database.", "GUILD")
 				end
 			else
-				SendChatMessage("[PC] Never seen it on AH.", "GUILD")
+				SendChatMessage("[PC] Item not found in AH database.", "GUILD")
 			end
 		end
 	elseif event == "AUCTION_HOUSE_SHOW" then
@@ -184,13 +184,21 @@ function RE:OnEvent(self, event, ...)
 		RE.DB = _G.RECrystallizeDatabase
 		RE.Config = _G.RECrystallizeSettings
 		RE.RealmString = GetRealmName()
+		RE.RegionString = GetCVar("portal")
 		for key, value in pairs(RE.DefaultConfig) do
 			if RE.Config[key] == nil then
 				RE.Config[key] = value
 			end
 		end
+		if RE.DefaultConfig.DatabaseVersion > RE.Config.DatabaseVersion then
+			wipe(RE.DB)
+			RE.Config.DatabaseVersion = RE.DefaultConfig.DatabaseVersion
+		end
 		if RE.DB[RE.RealmString] == nil then
 			RE.DB[RE.RealmString] = {}
+		end
+		if RE.DB[RE.RegionString] == nil then
+			RE.DB[RE.RegionString] = {}
 		end
 
 		local AceConfig = {
@@ -217,7 +225,7 @@ function RE:OnEvent(self, event, ...)
 					set = function(_, val) RE.Config.DatabaseCleanup = val * 86400 end,
 					get = function(_) return RE.Config.DatabaseCleanup / 86400 end
 				},
-				dbpurge = {
+				dbpurgerealm = {
 					name = L["Purge this server database"],
 					desc = L["WARNING! This operation is not reversible!"],
 					type = "execute",
@@ -226,17 +234,26 @@ function RE:OnEvent(self, event, ...)
 					confirm = true,
 					func = function() RE.DB[RE.RealmString] = {}; collectgarbage("collect") end
 				},
+				dbpurgeregion = {
+					name = L["Purge this region database"],
+					desc = L["WARNING! This operation is not reversible!"],
+					type = "execute",
+					width = "double",
+					order = 4,
+					confirm = true,
+					func = function() RE.DB[RE.RegionString] = {}; collectgarbage("collect") end
+				},
 				separator = {
 					type = "header",
 					name = _G.STATISTICS,
-					order = 4
+					order = 5
 				},
 				description = {
 					type = "description",
 					name = function(_)
 						local timeLeft = 1200 - (time() - RE.Config.LastScan)
 						local timeString = timeLeft > 0 and SecondsToTime(timeLeft) or L["Now"]
-						local timeLast = GetCVar("portal") == "US" and date("%I:%M %p %m/%d/%y", RE.Config.LastScan) or date("%H:%M %d.%m.%y", RE.Config.LastScan)
+						local timeLast = RE.RegionString == "US" and date("%I:%M %p %m/%d/%y", RE.Config.LastScan) or date("%H:%M %d.%m.%y", RE.Config.LastScan)
 						local s = L["Previous scan"]..": "..timeLast.."\n"..L["Next scan available in"]..": "..timeString.."\n\n"..L["Items in database"]..":\n"
 
 						for server, data in pairs(RE.DB) do
@@ -245,7 +262,7 @@ function RE:OnEvent(self, event, ...)
 
 						return s
 					end,
-					order = 5
+					order = 6
 				}
 			}
 		}
@@ -311,22 +328,19 @@ function RE:TooltipAddPrice(self, data)
 			RE.TooltipIcon = ""
 		end
 		if RE.BlockTooltip == RE.TooltipItemID then return end
-		if RE.DB[RE.RealmString][RE.TooltipItemID] ~= nil then
-			if RE.DB[RE.RealmString][RE.TooltipItemID][RE.TooltipItemVariant] == nil then
-				if RE.DB[RE.RealmString][RE.TooltipItemID]["::::::::"] ~= nil then
-					RE.TooltipItemVariant = "::::::::"
-				else
-					RE.TooltipItemVariant = RE:GetCheapestVariant(RE.DB[RE.RealmString][RE.TooltipItemID])
-					RE.TooltipIcon = " |TInterface\\AddOns\\RECrystallize\\Icons\\Warning:8|t"
-				end
+		RE.CurrentRecord = RE:GetDBRecord(RE.TooltipItemID)
+		if RE.CurrentRecord ~= nil then
+			if RE.CurrentRecord[RE.TooltipItemVariant] == nil then
+				RE.TooltipItemVariant = RE:GetCheapestVariant(RE.CurrentRecord)
+				RE.TooltipIcon = " |TInterface\\AddOns\\RECrystallize\\Icons\\Warning:8|t"
 			end
-			if RE.DB[RE.RealmString][RE.TooltipItemID][RE.TooltipItemVariant] ~= nil then
+			if RE.CurrentRecord[RE.TooltipItemVariant] ~= nil then
 				local shiftPressed = IsShiftKeyDown()
 				if ((shiftPressed and not RE.Config.AlwaysShowAll) or (not shiftPressed and RE.Config.AlwaysShowAll)) and (RE.TooltipCount > 0 or RE.TooltipCustomCount > 0) then
 					local count = RE.TooltipCustomCount > 0 and RE.TooltipCustomCount or RE.TooltipCount
-					SetTooltipMoney(self, RE.DB[RE.RealmString][RE.TooltipItemID][RE.TooltipItemVariant].Price * count, nil, "|cFF74D06C".._G.BUTTON_LAG_AUCTIONHOUSE..":|r", " (x"..count..")"..RE.TooltipIcon)
+					SetTooltipMoney(self, RE.CurrentRecord[RE.TooltipItemVariant].Price * count, nil, "|cFF74D06C".._G.BUTTON_LAG_AUCTIONHOUSE..":|r", " (x"..count..")"..RE.TooltipIcon)
 				else
-					SetTooltipMoney(self, RE.DB[RE.RealmString][RE.TooltipItemID][RE.TooltipItemVariant].Price, nil, "|cFF74D06C".._G.BUTTON_LAG_AUCTIONHOUSE..":|r", RE.TooltipIcon)
+					SetTooltipMoney(self, RE.CurrentRecord[RE.TooltipItemVariant].Price, nil, "|cFF74D06C".._G.BUTTON_LAG_AUCTIONHOUSE..":|r", RE.TooltipIcon)
 				end
 			end
 		end
@@ -347,8 +361,9 @@ function RE:TooltipPetAddPrice(link)
 			RE.TooltipLink = link
 			RE.TooltipItemVariant = RE:GetPetString(link)
 		end
-		if RE.DB[RE.RealmString][PETCAGEID] ~= nil and RE.DB[RE.RealmString][PETCAGEID][RE.TooltipItemVariant] ~= nil then
-			tt:AddLine("|cFF74D06C".._G.BUTTON_LAG_AUCTIONHOUSE..":|r    |cFFFFFFFF"..GetPetMoneyString(RE.DB[RE.RealmString][PETCAGEID][RE.TooltipItemVariant].Price, tt.Name:GetStringHeight() * 0.65).."|r")
+		RE.CurrentRecord = RE:GetDBRecord(PETCAGEID)
+		if RE.CurrentRecord ~= nil and RE.CurrentRecord[RE.TooltipItemVariant] ~= nil then
+			tt:AddLine("|cFF74D06C".._G.BUTTON_LAG_AUCTIONHOUSE..":|r    |cFFFFFFFF"..GetPetMoneyString(RE.CurrentRecord[RE.TooltipItemVariant].Price, tt.Name:GetStringHeight() * 0.65).."|r")
 			tt:SetHeight((select(2, tt.Level:GetFont()) + 4.5) * ((tt.Owned:GetText() ~= nil and 7 or 6) + (tt == _G.FloatingBattlePetTooltip and 1.15 or 0) + tt.linePool:GetNumActive()))
 		end
 	end
@@ -383,13 +398,13 @@ function RE:Scan()
 	for i = 0, num - 1 do
 		local link
 		local count, quality, _, _, _, _, _, price, _, _, _, _, _, _, itemID, status = select(3, GetReplicateItemInfo(i))
-
-		if status and count and price and itemID and type(quality) == "number" and count > 0 and price > 0 and itemID > 0 then
+		local stackable = GetItemMaxStackSizeByID(itemID)
+		if status and stackable ~= nil and count and price and itemID and type(quality) == "number" and count > 0 and price > 0 and itemID > 0 then
 			link = GetReplicateItemLink(i)
 			if link then
 				progress = progress + 1
 				RE.AHButton:SetText(progress.." / "..num)
-				RE.DBScan[i] = {["Price"] = price / count, ["ItemID"] = itemID, ["ItemLink"] = link, ["Quality"] = quality}
+				RE.DBScan[i] = {["Price"] = price / count, ["ItemID"] = itemID, ["ItemLink"] = link, ["Quality"] = quality, ["Commodity"] = stackable > 1}
 			end
 		else
 			local item = Item:CreateFromItemID(itemID)
@@ -402,7 +417,7 @@ function RE:Scan()
 						if link then
 							progress = progress + 1
 							RE.AHButton:SetText(progress.." / "..num)
-							RE.DBScan[i] = {["Price"] = price / count, ["ItemID"] = itemID, ["ItemLink"] = link, ["Quality"] = quality}
+							RE.DBScan[i] = {["Price"] = price / count, ["ItemID"] = itemID, ["ItemLink"] = link, ["Quality"] = quality, ["Commodity"] = item:IsStackable()}
 						end
 					end
 					if not next(inProgress) then
@@ -438,7 +453,8 @@ function RE:EndScan()
 
 	RE:ParseDatabase()
 	RE:SyncDatabase()
-	RE:CleanDatabase()
+	RE:CleanDatabase(RE.RealmString)
+	RE:CleanDatabase(RE.RegionString)
 	RE.DBScan = {}
 	RE.DBTemp = {}
 	collectgarbage("collect")
@@ -462,7 +478,7 @@ function RE:ParseDatabase()
 				itemStr = RE:GetItemString(offer.ItemLink)
 			end
 			if RE.DBTemp[offer.ItemID] == nil then
-				RE.DBTemp[offer.ItemID] = {}
+				RE.DBTemp[offer.ItemID] = {["Commodity"] = offer.Commodity}
 			end
 			if RE.DBTemp[offer.ItemID][itemStr] ~= nil then
 				if offer.Price < RE.DBTemp[offer.ItemID][itemStr] then
@@ -476,40 +492,65 @@ function RE:ParseDatabase()
 end
 
 function RE:SyncDatabase()
-	for itemID, _ in pairs(RE.DBTemp) do
-		if RE.DB[RE.RealmString][itemID] == nil then
-			RE.DB[RE.RealmString][itemID] = {}
+	for itemID, data in pairs(RE.DBTemp) do
+		local targetDB = RE.RealmString
+		if data.Commodity then
+			targetDB = RE.RegionString
+		end
+		if RE.DB[targetDB][itemID] == nil then
+			RE.DB[targetDB][itemID] = {}
 		end
 		for variant, _ in pairs(RE.DBTemp[itemID]) do
-			if RE.DB[RE.RealmString][itemID][variant] ~= nil then
-				if RE.DBTemp[itemID][variant] ~= RE.DB[RE.RealmString][itemID][variant].Price then
-					RE.ScanStats[2] = RE.ScanStats[2] + 1
+			if variant ~= "Commodity" then
+				if RE.DB[targetDB][itemID][variant] ~= nil then
+					if RE.DBTemp[itemID][variant] ~= RE.DB[targetDB][itemID][variant].Price then
+						RE.ScanStats[2] = RE.ScanStats[2] + 1
+					end
+				else
+					RE.ScanStats[1] = RE.ScanStats[1] + 1
 				end
-			else
-				RE.ScanStats[1] = RE.ScanStats[1] + 1
+				RE.DB[targetDB][itemID][variant] = {["Price"] = RE.DBTemp[itemID][variant], ["LastSeen"] = RE.Config.LastScan}
 			end
-			RE.DB[RE.RealmString][itemID][variant] = {["Price"] = RE.DBTemp[itemID][variant], ["LastSeen"] = RE.Config.LastScan}
 		end
 	end
 end
 
-function RE:CleanDatabase()
-	for itemID, _ in pairs(RE.DB[RE.RealmString]) do
-		for variant, data in pairs(RE.DB[RE.RealmString][itemID]) do
+function RE:CleanDatabase(targetDB)
+	for itemID, _ in pairs(RE.DB[targetDB]) do
+		for variant, data in pairs(RE.DB[targetDB][itemID]) do
 			if RE.Config.LastScan - data.LastSeen > RE.Config.DatabaseCleanup then
-				RE.DB[RE.RealmString][itemID][variant] = nil
+				RE.DB[targetDB][itemID][variant] = nil
 				RE.ScanStats[3] = RE.ScanStats[3] + 1
 			end
 		end
-		if next(RE.DB[RE.RealmString][itemID]) == nil then
-			RE.DB[RE.RealmString][itemID] = nil
+		if next(RE.DB[targetDB][itemID]) == nil then
+			RE.DB[targetDB][itemID] = nil
 		end
+	end
+end
+
+function RE:GetDBRecord(itemID)
+	if RE.DB[RE.RealmString][itemID] ~= nil then
+		return RE.DB[RE.RealmString][itemID]
+	elseif RE.DB[RE.RegionString][itemID] ~= nil then
+		return RE.DB[RE.RegionString][itemID]
+	else
+		return
 	end
 end
 
 function RE:GetItemString(link)
 	local raw = select(2, ExtractLink(link))
-	return sMatch(gsub(raw, "Player-.*-.*:", ":"), "^.-:.-:.-:.-:.-:.-:.-:.-:.-:.-:(.*)")
+	RE.BonusIDCache = strsplittable(":", raw)
+	local bonusIDNum = RE.BonusIDCache[13]
+	if bonusIDNum ~= "" then
+		local totalBonusID = 0
+		for i=14, 13 + bonusIDNum do
+			totalBonusID = totalBonusID + tonumber(RE.BonusIDCache[i])
+		end
+		return totalBonusID
+	end
+	return 0
 end
 
 function RE:GetPetString(link)
@@ -546,27 +587,27 @@ function RECrystallize_PriceCheck(link)
 			return
 		end
 
-		if RE.DB[RE.RealmString][itemID] ~= nil then
-			if itemID ~= PETCAGEID and RE.DB[RE.RealmString][itemID][variant] == nil then
-				if RE.DB[RE.RealmString][itemID]["::::::::"] ~= nil then
-					variant = "::::::::"
-				else
-					variant = RE:GetCheapestVariant(RE.DB[RE.RealmString][itemID])
-					partial = true
-				end
+		RE.CurrentRecord = RE:GetDBRecord(itemID)
+		if RE.CurrentRecord ~= nil then
+			if itemID ~= PETCAGEID and RE.CurrentRecord[variant] == nil then
+				variant = RE:GetCheapestVariant(RE.CurrentRecord)
+				partial = true
 			end
-			if RE.DB[RE.RealmString][itemID][variant] ~= nil then
-				return RE.DB[RE.RealmString][itemID][variant].Price, RE.DB[RE.RealmString][itemID][variant].LastSeen, partial
+			if RE.CurrentRecord[variant] ~= nil then
+				return RE.CurrentRecord[variant].Price, RE.CurrentRecord[variant].LastSeen, partial
 			end
 		end
 	end
 end
 
 function RECrystallize_PriceCheckItemID(itemID)
-	if type(itemID) == "number" and RE.DB[RE.RealmString][itemID] ~= nil then
-		local variant = RE:GetCheapestVariant(RE.DB[RE.RealmString][itemID])
-		if RE.DB[RE.RealmString][itemID][variant] ~= nil then
-			return RE.DB[RE.RealmString][itemID][variant].Price, RE.DB[RE.RealmString][itemID][variant].LastSeen
+	if type(itemID) == "number" then
+		RE.CurrentRecord = RE:GetDBRecord(itemID)
+		if RE.CurrentRecord ~= nil then
+			local variant = RE:GetCheapestVariant(RE.CurrentRecord)
+			if RE.CurrentRecord[variant] ~= nil then
+				return RE.CurrentRecord[variant].Price, RE.CurrentRecord[variant].LastSeen
+			end
 		end
 	end
 end

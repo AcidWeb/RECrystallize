@@ -13,6 +13,7 @@ L["When enabled the functionality of the SHIFT button will be swapped."] = true
 L["Data freshness"] = true
 L["The number of days after which old data will be deleted."] = true
 L["Purge this server database"] = true
+L["Purge this region database"] = true
 L["WARNING! This operation is not reversible!"] = true
 L["Previous scan"] = true
 L["Next scan available in"] = true
