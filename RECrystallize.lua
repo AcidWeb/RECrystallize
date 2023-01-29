@@ -4,7 +4,7 @@ local L = LibStub("AceLocale-3.0"):GetLocale("RECrystallize")
 local GUI = LibStub("AceGUI-3.0")
 _G.RECrystallize = RE
 
-local time, collectgarbage, hooksecurefunc, next, select, pairs, tonumber, floor, print, date = _G.time, _G.collectgarbage, _G.hooksecurefunc, _G.next, _G.select, _G.pairs, _G.tonumber, _G.floor, _G.print, _G.date
+local time, collectgarbage, hooksecurefunc, next, select, pairs, tonumber, floor, print, date, gsub = _G.time, _G.collectgarbage, _G.hooksecurefunc, _G.next, _G.select, _G.pairs, _G.tonumber, _G.floor, _G.print, _G.date, _G.gsub
 local sMatch, sFormat = _G.string.match, _G.string.format
 local tConcat = _G.table.concat
 local Item = _G.Item
@@ -288,11 +288,19 @@ function RE:TooltipAddPrice(self, data)
 		else
 			RE.RecipeLock = false
 		end
-		local owner = self:GetOwner()
-		if owner then
-			owner = owner:GetParent()
-			if owner and owner.reagentSlotSchematic and owner.reagentSlotSchematic.quantityRequired then
-				RE.TooltipCustomCount = owner.reagentSlotSchematic.quantityRequired
+		if _G.ProfessionsFrame:IsVisible() then
+			local owner = self:GetOwner()
+			if owner then
+				owner = owner:GetParent()
+				if owner and owner.reagentSlotSchematic and owner.reagentSlotSchematic.quantityRequired then
+					RE.TooltipCustomCount = owner.reagentSlotSchematic.quantityRequired
+					local slot = owner:GetSlotIndex()
+					if #owner.transaction.allocationTbls[slot].allocs == 1 then
+						link = gsub(link, "item:(%d+)", "item:"..owner.transaction.allocationTbls[slot].allocs[1].reagent.itemID)
+					else
+						return
+					end
+				end
 			end
 		end
 		if link ~= RE.TooltipLink then
