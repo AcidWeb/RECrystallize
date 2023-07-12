@@ -175,6 +175,9 @@ function RE:OnEvent(self, event, ...)
 			RE.WarningTimer:Cancel()
 		end
 	elseif event == "ADDON_LOADED" and ... == "RECrystallize" then
+		self:UnregisterEvent("ADDON_LOADED")
+		ProfessionsFrame_LoadUI()
+
 		if not _G.RECrystallizeDatabase then
 			_G.RECrystallizeDatabase = {}
 		end
@@ -289,8 +292,6 @@ function RE:OnEvent(self, event, ...)
 		else
 			RE.IsSkinned = false
 		end
-
-		self:UnregisterEvent("ADDON_LOADED")
 	end
 end
 
