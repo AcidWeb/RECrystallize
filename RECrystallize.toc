@@ -8,7 +8,6 @@
 ## X-WoWI-ID: 25496
 ## X-Wago-ID: 9rN4JdKD
 
-TaintLess.xml
 Embeds.xml
 Locale\Locale.xml
 RECrystallize.xml

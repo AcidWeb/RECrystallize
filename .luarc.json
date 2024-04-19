@@ -1,0 +1,32 @@
+{
+	"$schema": "https://raw.githubusercontent.com/sumneko/vscode-lua/master/setting/schema.json",
+	"runtime.version": "Lua 5.1",
+	"diagnostics.globals": [
+		"AuctionHouseUtil",
+		"AuctionHouseFrame",
+		"AuctionHouseFrameDisplayMode",
+		"BattlePetTooltip",
+		"FloatingBattlePetTooltip",
+		"TooltipDataProcessor",
+		"RECrystallizeFrame",
+		"Professions",
+		"ProfessionsFrame",
+		"ProfessionsFrame_LoadUI",
+		"COPPER_PER_SILVER",
+		"SILVER_PER_GOLD",
+		"GOLD_AMOUNT_TEXTURE_STRING",
+		"SILVER_AMOUNT_TEXTURE",
+		"BUTTON_LAG_AUCTIONHOUSE",
+		"STATISTICS",
+		"LANDING_PAGE_REPORT",
+		"LE_ITEM_CLASS_RECIPE",
+		"LE_ITEM_RECIPE_BOOK",
+		"ElvUI",
+		"LinkUtil",
+		"SetTooltipMoney"
+    ],
+	"diagnostics.disable": [
+		"undefined-field",
+		"param-type-mismatch"
+	]
+}

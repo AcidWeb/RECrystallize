@@ -1,35 +1,33 @@
-local _G = _G
 local _, RE = ...
 local L = LibStub("AceLocale-3.0"):GetLocale("RECrystallize")
 local GUI = LibStub("AceGUI-3.0")
-_G.RECrystallize = RE
+RECrystallize = RE
 
-local time, collectgarbage, hooksecurefunc, next, select, pairs, tonumber, floor, print, date, gsub = _G.time, _G.collectgarbage, _G.hooksecurefunc, _G.next, _G.select, _G.pairs, _G.tonumber, _G.floor, _G.print, _G.date, _G.gsub
-local sMatch, sFormat = _G.string.match, _G.string.format
-local tConcat = _G.table.concat
-local Item = _G.Item
-local Round = _G.Round
-local PlaySound = _G.PlaySound
-local GetCVar = _G.GetCVar
-local NewTicker = _G.C_Timer.NewTicker
-local GetItemInfo = _G.GetItemInfo
-local GetItemCount = _G.GetItemCount
-local GetRealmName = _G.GetRealmName
-local SecondsToTime = _G.SecondsToTime
-local IsShiftKeyDown = _G.IsShiftKeyDown
-local SendChatMessage = _G.SendChatMessage
-local SetTooltipMoney = _G.SetTooltipMoney
-local FormatLargeNumber = _G.FormatLargeNumber
-local IsLinkType = _G.LinkUtil.IsLinkType
-local ExtractLink = _G.LinkUtil.ExtractLink
-local ReplicateItems = _G.C_AuctionHouse.ReplicateItems
-local GetNumReplicateItems = _G.C_AuctionHouse.GetNumReplicateItems
-local GetReplicateItemInfo = _G.C_AuctionHouse.GetReplicateItemInfo
-local GetReplicateItemLink = _G.C_AuctionHouse.GetReplicateItemLink
-local GetItemMaxStackSizeByID = _G.C_Item.GetItemMaxStackSizeByID
-local TransmogGetItemInfo = _G.C_TransmogCollection.GetItemInfo
-local AddTooltipPostCall = _G.TooltipDataProcessor.AddTooltipPostCall
-local ElvUI = _G.ElvUI
+local sMatch, sFormat = string.match, string.format
+local tConcat = table.concat
+local Item = Item
+local Round = Round
+local PlaySound = PlaySound
+local GetCVar = GetCVar
+local NewTicker = C_Timer.NewTicker
+local GetItemInfo = C_Item.GetItemInfo
+local GetItemCount = C_Item.GetItemCount
+local GetRealmName = GetRealmName
+local SecondsToTime = SecondsToTime
+local IsShiftKeyDown = IsShiftKeyDown
+local SendChatMessage = SendChatMessage
+local SetTooltipMoney = SetTooltipMoney
+local FormatLargeNumber = FormatLargeNumber
+local IsLinkType = LinkUtil.IsLinkType
+local ExtractLink = LinkUtil.ExtractLink
+local ReplicateItems = C_AuctionHouse.ReplicateItems
+local GetNumReplicateItems = C_AuctionHouse.GetNumReplicateItems
+local GetReplicateItemInfo = C_AuctionHouse.GetReplicateItemInfo
+local GetReplicateItemLink = C_AuctionHouse.GetReplicateItemLink
+local GetItemMaxStackSizeByID = C_Item.GetItemMaxStackSizeByID
+local TransmogGetItemInfo = C_TransmogCollection.GetItemInfo
+local AddTooltipPostCall = TooltipDataProcessor.AddTooltipPostCall
+local ElvUI = ElvUI
 
 local PETCAGEID = 82800
 
@@ -58,11 +56,11 @@ end
 
 local function GetPetMoneyString(money, size)
 	local goldString, silverString
-	local gold = floor(money / (_G.COPPER_PER_SILVER * _G.SILVER_PER_GOLD))
-	local silver = floor((money - (gold * _G.COPPER_PER_SILVER * _G.SILVER_PER_GOLD)) / _G.COPPER_PER_SILVER)
+	local gold = floor(money / (COPPER_PER_SILVER * SILVER_PER_GOLD))
+	local silver = floor((money - (gold * COPPER_PER_SILVER * SILVER_PER_GOLD)) / COPPER_PER_SILVER)
 
-    goldString = _G.GOLD_AMOUNT_TEXTURE_STRING:format(FormatLargeNumber(gold), size, size)
-    silverString = _G.SILVER_AMOUNT_TEXTURE:format(silver, size, size)
+    goldString = GOLD_AMOUNT_TEXTURE_STRING:format(FormatLargeNumber(gold), size, size)
+    silverString = SILVER_AMOUNT_TEXTURE:format(silver, size, size)
 
 	local moneyString = ""
 	local separator = ""
@@ -93,7 +91,7 @@ function RE:OnEvent(self, event, ...)
 	elseif event == "CHAT_MSG_GUILD" then
 		local msg = ...
 		if sMatch(msg, "^!!!") then
-			local itemID, itemVariant = 0, ""
+			local itemID, itemVariant = nil, ""
 			if IsLinkType(msg, "item") then
 				itemID = tonumber(sMatch(msg, "item:(%d+)"))
 				itemVariant = RE:GetItemString(msg)
@@ -137,7 +135,7 @@ function RE:OnEvent(self, event, ...)
 		if not RE.GUIInitialized then
 			RE.GUIInitialized = true
 
-			hooksecurefunc(_G.AuctionHouseFrame, "SetDisplayMode", RE.HandleButton)
+			hooksecurefunc(AuctionHouseFrame, "SetDisplayMode", RE.HandleButton)
 			local function HijackOnEnterCallback(owner, rowData)
 				if rowData.itemKey then
 					if rowData.itemKey.battlePetSpeciesID > 0 then
@@ -146,19 +144,19 @@ function RE:OnEvent(self, event, ...)
 						RE.BlockTooltip = rowData.itemKey.itemID
 					end
 				end
-				_G.AuctionHouseUtil.LineOnEnterCallback(owner, rowData)
+				AuctionHouseUtil.LineOnEnterCallback(owner, rowData)
 			end
-			_G.AuctionHouseFrame.BrowseResultsFrame.ItemList:SetLineOnEnterCallback(HijackOnEnterCallback)
+			AuctionHouseFrame.BrowseResultsFrame.ItemList:SetLineOnEnterCallback(HijackOnEnterCallback)
 
 			RE.AHButton = GUI:Create("Button")
 			RE.AHButton:SetWidth(139)
 			RE.AHButton:SetCallback("OnClick", RE.StartScan)
-			RE.AHButton.frame:SetParent(_G.AuctionHouseFrame)
+			RE.AHButton.frame:SetParent(AuctionHouseFrame)
 			RE.AHButton.frame:ClearAllPoints()
 			if RE.IsSkinned then
-				RE.AHButton.frame:SetPoint("TOPLEFT", _G.AuctionHouseFrame, "TOPLEFT", 10, -37)
+				RE.AHButton.frame:SetPoint("TOPLEFT", AuctionHouseFrame, "TOPLEFT", 10, -37)
 			else
-				RE.AHButton.frame:SetPoint("TOPLEFT", _G.AuctionHouseFrame, "TOPLEFT", 170, -511)
+				RE.AHButton.frame:SetPoint("TOPLEFT", AuctionHouseFrame, "TOPLEFT", 170, -511)
 			end
 			RE.AHButton.frame:Show()
 		end
@@ -178,14 +176,14 @@ function RE:OnEvent(self, event, ...)
 		self:UnregisterEvent("ADDON_LOADED")
 		ProfessionsFrame_LoadUI()
 
-		if not _G.RECrystallizeDatabase then
-			_G.RECrystallizeDatabase = {}
+		if not RECrystallizeDatabase then
+			RECrystallizeDatabase = {}
 		end
-		if not _G.RECrystallizeSettings then
-			_G.RECrystallizeSettings = RE.DefaultConfig
+		if not RECrystallizeSettings then
+			RECrystallizeSettings = RE.DefaultConfig
 		end
-		RE.DB = _G.RECrystallizeDatabase
-		RE.Config = _G.RECrystallizeSettings
+		RE.DB = RECrystallizeDatabase
+		RE.Config = RECrystallizeSettings
 		RE.RealmString = GetRealmName()
 		RE.RegionString = GetCVar("portal")
 		for key, value in pairs(RE.DefaultConfig) do
@@ -248,7 +246,7 @@ function RE:OnEvent(self, event, ...)
 				},
 				separator = {
 					type = "header",
-					name = _G.STATISTICS,
+					name = STATISTICS,
 					order = 5
 				},
 				description = {
@@ -269,8 +267,8 @@ function RE:OnEvent(self, event, ...)
 				}
 			}
 		}
-		_G.LibStub("AceConfigRegistry-3.0"):RegisterOptionsTable("RECrystallize", AceConfig)
-		_G.LibStub("AceConfigDialog-3.0"):AddToBlizOptions("RECrystallize", "RECrystallize")
+		LibStub("AceConfigRegistry-3.0"):RegisterOptionsTable("RECrystallize", AceConfig)
+		LibStub("AceConfigDialog-3.0"):AddToBlizOptions("RECrystallize", "RECrystallize")
 
 		if RE.Config.GuildChatPC then
 			self:RegisterEvent("CHAT_MSG_GUILD")
@@ -281,11 +279,11 @@ function RE:OnEvent(self, event, ...)
 		end
 
 		AddTooltipPostCall(Enum.TooltipDataType.Item, function(tt, data) RE:TooltipAddPrice(tt, data); RE.TooltipCustomCount = -1 end)
-		_G.GameTooltip:HookScript("OnTooltipCleared", function(_) RE.RecipeLock = false end)
+		GameTooltip:HookScript("OnTooltipCleared", function(_) RE.RecipeLock = false end)
 
 		hooksecurefunc("BattlePetToolTip_Show", function(speciesID, level, breedQuality, maxHealth, power, speed) RE:TooltipPetAddPrice(sFormat("|cffffffff|Hbattlepet:%s:%s:%s:%s:%s:%s:0000000000000000:0|h[XYZ]|h|r", speciesID, level, breedQuality, maxHealth, power, speed)) end)
 		hooksecurefunc("FloatingBattlePet_Show", function(speciesID, level, breedQuality, maxHealth, power, speed) RE:TooltipPetAddPrice(sFormat("|cffffffff|Hbattlepet:%s:%s:%s:%s:%s:%s:0000000000000000:0|h[XYZ]|h|r", speciesID, level, breedQuality, maxHealth, power, speed)) end)
-		hooksecurefunc(_G.Professions, "FlyoutOnElementEnterImplementation", function(data, tt) RE:TooltipAddPrice(tt, data.item); RE.TooltipCustomCount = -1 end)
+		hooksecurefunc(Professions, "FlyoutOnElementEnterImplementation", function(data, tt) RE:TooltipAddPrice(tt, data.item); RE.TooltipCustomCount = -1 end)
 
 		if ElvUI then
 			RE.IsSkinned = ElvUI[1].private.skins.blizzard.auctionhouse
@@ -300,13 +298,13 @@ function RE:TooltipAddPrice(self, data)
 	local link = self.GetItem and select(2, self:GetItem()) or (data.GetItemLink and data:GetItemLink() or data.hyperlink)
 	if link and IsLinkType(link, "item") then
 		local itemTypeId, itemSubTypeId = select(12, GetItemInfo(link))
-		if not RE.RecipeLock and itemTypeId == _G.LE_ITEM_CLASS_RECIPE and itemSubTypeId ~= _G.LE_ITEM_RECIPE_BOOK then
+		if not RE.RecipeLock and itemTypeId == LE_ITEM_CLASS_RECIPE and itemSubTypeId ~= LE_ITEM_RECIPE_BOOK then
 			RE.RecipeLock = true
 			return
 		else
 			RE.RecipeLock = false
 		end
-		if _G.ProfessionsFrame:IsVisible() then
+		if ProfessionsFrame:IsVisible() then
 			local owner = self:GetOwner()
 			if owner then
 				owner = owner:GetParent()
@@ -339,9 +337,9 @@ function RE:TooltipAddPrice(self, data)
 				local shiftPressed = IsShiftKeyDown()
 				if ((shiftPressed and not RE.Config.AlwaysShowAll) or (not shiftPressed and RE.Config.AlwaysShowAll)) and (RE.TooltipCount > 0 or RE.TooltipCustomCount > 0) then
 					local count = RE.TooltipCustomCount > 0 and RE.TooltipCustomCount or RE.TooltipCount
-					SetTooltipMoney(self, RE.CurrentRecord[RE.TooltipItemVariant].Price * count, nil, "|cFF74D06C".._G.BUTTON_LAG_AUCTIONHOUSE..":|r", " (x"..count..")"..RE.TooltipIcon)
+					SetTooltipMoney(self, RE.CurrentRecord[RE.TooltipItemVariant].Price * count, nil, "|cFF74D06C"..BUTTON_LAG_AUCTIONHOUSE..":|r", " (x"..count..")"..RE.TooltipIcon)
 				else
-					SetTooltipMoney(self, RE.CurrentRecord[RE.TooltipItemVariant].Price, nil, "|cFF74D06C".._G.BUTTON_LAG_AUCTIONHOUSE..":|r", RE.TooltipIcon)
+					SetTooltipMoney(self, RE.CurrentRecord[RE.TooltipItemVariant].Price, nil, "|cFF74D06C"..BUTTON_LAG_AUCTIONHOUSE..":|r", RE.TooltipIcon)
 				end
 			end
 		end
@@ -350,10 +348,10 @@ end
 
 function RE:TooltipPetAddPrice(link)
 	local tt
-	if _G.BattlePetTooltip:IsShown() then
-		tt = _G.BattlePetTooltip
-	elseif _G.FloatingBattlePetTooltip:IsShown() then
-		tt = _G.FloatingBattlePetTooltip
+	if BattlePetTooltip:IsShown() then
+		tt = BattlePetTooltip
+	elseif FloatingBattlePetTooltip:IsShown() then
+		tt = FloatingBattlePetTooltip
 	end
 	if tt then
 		if RE.BlockTooltip == tt.speciesID then return end
@@ -364,14 +362,14 @@ function RE:TooltipPetAddPrice(link)
 		end
 		RE.CurrentRecord = RE:GetDBRecord(PETCAGEID)
 		if RE.CurrentRecord ~= nil and RE.CurrentRecord[RE.TooltipItemVariant] ~= nil then
-			tt:AddLine("|cFF74D06C".._G.BUTTON_LAG_AUCTIONHOUSE..":|r    |cFFFFFFFF"..GetPetMoneyString(RE.CurrentRecord[RE.TooltipItemVariant].Price, tt.Name:GetStringHeight() * 0.65).."|r")
-			tt:SetHeight((select(2, tt.Level:GetFont()) + 4.5) * ((tt.Owned:GetText() ~= nil and 7 or 6) + (tt == _G.FloatingBattlePetTooltip and 1.15 or 0) + tt.linePool:GetNumActive()))
+			tt:AddLine("|cFF74D06C"..BUTTON_LAG_AUCTIONHOUSE..":|r    |cFFFFFFFF"..GetPetMoneyString(RE.CurrentRecord[RE.TooltipItemVariant].Price, tt.Name:GetStringHeight() * 0.65).."|r")
+			tt:SetHeight((select(2, tt.Level:GetFont()) + 4.5) * ((tt.Owned:GetText() ~= nil and 7 or 6) + (tt == FloatingBattlePetTooltip and 1.15 or 0) + tt.linePool:GetNumActive()))
 		end
 	end
 end
 
 function RE:HandleButton(mode)
-	if mode == _G.AuctionHouseFrameDisplayMode.Buy or mode == _G.AuctionHouseFrameDisplayMode.ItemBuy or mode == _G.AuctionHouseFrameDisplayMode.CommoditiesBuy then
+	if mode == AuctionHouseFrameDisplayMode.Buy or mode == AuctionHouseFrameDisplayMode.ItemBuy or mode == AuctionHouseFrameDisplayMode.CommoditiesBuy then
 		RE.AHButton.frame:Show()
 	else
 		RE.AHButton.frame:Hide()
@@ -385,7 +383,7 @@ function RE:StartScan()
 	RE.Config.LastScan = time()
 	RE.AHButton:SetText(L["Waiting..."])
 	RE.AHButton:SetDisabled(true)
-	_G.RECrystallizeFrame:RegisterEvent("REPLICATE_ITEM_LIST_UPDATE")
+	RECrystallizeFrame:RegisterEvent("REPLICATE_ITEM_LIST_UPDATE")
 	RE.WarningTimer = NewTicker(30, function() print("|cFF9D9D9D[|r|cFF74D06CRE|rCrystallize|cFF9D9D9D]|r "..L["Access to AH data takes longer than usual. This may be caused by server overload."]) end)
 	ReplicateItems()
 end
@@ -461,8 +459,8 @@ function RE:EndScan()
 	collectgarbage("collect")
 
 	RE.AHButton:SetText(L["Scan finished!"])
-	PlaySound(_G.SOUNDKIT.AUCTION_WINDOW_CLOSE)
-	print("|cFF9D9D9D---|r |cFF74D06CRE|rCrystallize ".._G.LANDING_PAGE_REPORT.." |cFF9D9D9D---|r")
+	PlaySound(SOUNDKIT.AUCTION_WINDOW_CLOSE)
+	print("|cFF9D9D9D---|r |cFF74D06CRE|rCrystallize "..LANDING_PAGE_REPORT.." |cFF9D9D9D---|r")
 	print("|cFF74D06C"..L["Scan time"]..":|r "..SecondsToTime(time() - RE.Config.LastScan))
 	print("|cFF74D06C"..L["New items"]..":|r "..RE.ScanStats[1])
 	print("|cFF74D06C"..L["Updated items"]..":|r "..RE.ScanStats[2])
@@ -531,7 +529,9 @@ function RE:CleanDatabase(targetDB)
 end
 
 function RE:GetDBRecord(itemID)
-	if RE.DB[RE.RealmString][itemID] ~= nil then
+	if itemID == nil then
+		return
+	elseif RE.DB[RE.RealmString][itemID] ~= nil then
 		return RE.DB[RE.RealmString][itemID]
 	elseif RE.DB[RE.RegionString][itemID] ~= nil then
 		return RE.DB[RE.RegionString][itemID]
@@ -551,7 +551,7 @@ function RE:GetItemString(link)
 		end
 		return totalBonusID
 	end
-	return 0
+	return "0"
 end
 
 function RE:GetPetString(link)
