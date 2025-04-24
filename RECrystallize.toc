@@ -1,7 +1,7 @@
-## Interface: 110100
+## Interface: 110105
 ## Title: |cFF74D06CRE|rCrystallize
 ## Notes: Provide Auction House scanner and add item prices to tooltips.
-## Version: 2.0.13
+## Version: 2.0.14
 ## Author: AcidWeb
 ## SavedVariables: RECrystallizeSettings, RECrystallizeDatabase
 ## IconTexture: Interface\AddOns\RECrystallize\RELogo
@@ -13,7 +13,7 @@
 ## Category-itIT: Aste
 ## Category-koKR: 경매
 ## Category-ptBR: Leilões
-## Category-ruRU: Лоты
+## Category-ruRU: Аукционы
 ## Category-zhCN: 拍卖
 ## Category-zhTW: 拍賣
 ## X-WoWI-ID: 25496
