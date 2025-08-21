@@ -42,6 +42,6 @@
 		"param-type-mismatch"
 	],
     "Lua.workspace.library": [
-		"~\\.vscode\\extensions\\ketho.wow-api-0.20.6\\Annotations\\Core"
+		"~\\.vscode\\extensions\\ketho.wow-api-0.21.0\\Annotations\\Core"
 	]
 }
