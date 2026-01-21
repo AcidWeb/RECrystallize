@@ -15,7 +15,7 @@ local GetItemCount = C_Item.GetItemCount
 local GetRealmName = GetRealmName
 local SecondsToTime = SecondsToTime
 local IsShiftKeyDown = IsShiftKeyDown
-local SendChatMessage = SendChatMessage
+local SendChatMessage = C_ChatInfo.SendChatMessage
 local SetTooltipMoney = SetTooltipMoney
 local FormatLargeNumber = FormatLargeNumber
 local IsLinkType = LinkUtil.IsLinkType
@@ -283,7 +283,7 @@ function RE:OnEvent(self, event, ...)
 
 		hooksecurefunc("BattlePetToolTip_Show", function(speciesID, level, breedQuality, maxHealth, power, speed) RE:TooltipPetAddPrice(sFormat("|cffffffff|Hbattlepet:%s:%s:%s:%s:%s:%s:0000000000000000:0|h[XYZ]|h|r", speciesID, level, breedQuality, maxHealth, power, speed)) end)
 		hooksecurefunc("FloatingBattlePet_Show", function(speciesID, level, breedQuality, maxHealth, power, speed) RE:TooltipPetAddPrice(sFormat("|cffffffff|Hbattlepet:%s:%s:%s:%s:%s:%s:0000000000000000:0|h[XYZ]|h|r", speciesID, level, breedQuality, maxHealth, power, speed)) end)
-		hooksecurefunc(Professions, "FlyoutOnElementEnterImplementation", function(data, tt) RE:TooltipAddPrice(tt, data.item); RE.TooltipCustomCount = -1 end)
+		--hooksecurefunc(Professions, "FlyoutOnElementEnterImplementation", function(data, tt) RE:TooltipAddPrice(tt, data.item); RE.TooltipCustomCount = -1 end)
 
 		if ElvUI then
 			RE.IsSkinned = ElvUI[1].private.skins.blizzard.auctionhouse
@@ -384,7 +384,7 @@ function RE:StartScan()
 	RE.AHButton:SetText(L["Waiting..."])
 	RE.AHButton:SetDisabled(true)
 	RECrystallizeFrame:RegisterEvent("REPLICATE_ITEM_LIST_UPDATE")
-	RE.WarningTimer = NewTicker(30, function() print("|cFF9D9D9D[|r|cFF74D06CRE|rCrystallize|cFF9D9D9D]|r "..L["Access to AH data takes longer than usual. This may be caused by server overload."]) end)
+	RE.WarningTimer = NewTicker(60, function() print("|cFF9D9D9D[|r|cFF74D06CRE|rCrystallize|cFF9D9D9D]|r "..L["Access to AH data takes longer than usual. This may be caused by server overload."]) end)
 	ReplicateItems()
 end
 

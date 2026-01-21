@@ -1,47 +1,48 @@
 {
     "Lua.runtime.version": "Lua 5.1",
     "Lua.runtime.builtin": {
-		"basic": "disable",
-		"debug": "disable",
-		"io": "disable",
-		"math": "disable",
-		"os": "disable",
-		"package": "disable",
-		"string": "disable",
-		"table": "disable",
-		"utf8": "disable"
-	},
-    "Lua.diagnostics.globals": [
-		"AuctionHouseUtil",
-		"AuctionHouseFrame",
-		"AuctionHouseFrameDisplayMode",
-		"BattlePetTooltip",
-		"FloatingBattlePetTooltip",
-		"TooltipDataProcessor",
-		"RECrystallizeFrame",
-		"Professions",
-		"ProfessionsFrame",
-		"ProfessionsFrame_LoadUI",
-		"COPPER_PER_SILVER",
-		"SILVER_PER_GOLD",
-		"GOLD_AMOUNT_TEXTURE_STRING",
-		"SILVER_AMOUNT_TEXTURE",
-		"BUTTON_LAG_AUCTIONHOUSE",
-		"STATISTICS",
-		"LANDING_PAGE_REPORT",
-		"LE_ITEM_CLASS_RECIPE",
-		"LE_ITEM_RECIPE_BOOK",
-		"ElvUI",
-		"LinkUtil",
-		"SetTooltipMoney",
-		"Round",
-		"SOUNDKIT"
-	],
-	"Lua.diagnostics.disable": [
-		"undefined-field",
-		"param-type-mismatch"
-	],
+        "basic": "disable",
+        "debug": "disable",
+        "io": "disable",
+        "math": "disable",
+        "os": "disable",
+        "package": "disable",
+        "string": "disable",
+        "table": "disable",
+        "utf8": "disable"
+    },
     "Lua.workspace.library": [
-		"~\\.vscode\\extensions\\ketho.wow-api-0.21.0\\Annotations\\Core"
-	]
+        "~\\.vscode\\extensions\\ketho.wow-api-0.21.0\\Annotations\\Core"
+    ],
+    "Lua.diagnostics.globals": [
+        "Round",
+        "SOUNDKIT",
+        "SetTooltipMoney",
+        "LinkUtil",
+        "TooltipDataProcessor",
+        "ProfessionsFrame_LoadUI",
+        "BattlePetTooltip",
+        "FloatingBattlePetTooltip",
+        "GOLD_AMOUNT_TEXTURE_STRING",
+        "SILVER_AMOUNT_TEXTURE",
+        "Professions",
+        "LANDING_PAGE_REPORT",
+        "COPPER_PER_SILVER",
+        "AuctionHouseFrameDisplayMode",
+        "AuctionHouseFrame",
+        "ProfessionsFrame",
+        "SILVER_PER_GOLD",
+        "AuctionHouseUtil",
+        "BUTTON_LAG_AUCTIONHOUSE",
+        "STATISTICS",
+        "ElvUI",
+        "LE_ITEM_CLASS_RECIPE",
+        "LE_ITEM_RECIPE_BOOK",
+        "RECrystallizeFrame"
+    ],
+    "Lua.diagnostics.disable": [
+        "invisible",
+        "undefined-field",
+        "param-type-mismatch"
+    ]
 }
