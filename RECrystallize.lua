@@ -31,7 +31,7 @@ local ElvUI = ElvUI
 
 local PETCAGEID = 82800
 
-RE.DefaultConfig = {["LastScan"] = 0, ["GuildChatPC"] = false, ["DatabaseCleanup"] = 432000, ["AlwaysShowAll"] = false, ["DatabaseVersion"] = 2}
+RE.DefaultConfig = {["LastScan"] = 0, ["GuildChatPC"] = false, ["DatabaseCleanup"] = 432000, ["AlwaysShowAll"] = false, ["DatabaseVersion"] = 2, ["IgnoreStackSize"] = 1}
 RE.GUIInitialized = false
 RE.RecipeLock = false
 RE.ScanFinished = false
@@ -214,12 +214,22 @@ function RE:OnEvent(self, event, ...)
 					set = function(_, val) RE.Config.AlwaysShowAll = val end,
 					get = function(_) return RE.Config.AlwaysShowAll end
 				},
+				stacksize = {
+					name = L["Minimum size of commodity stack"],
+					desc = L["Commodity orders that contain fewer items than the specified value will be ignored."],
+					type = "input",
+					width = "double",
+					order = 2,
+					pattern = "%d",
+					set = function(_, val) RE.Config.IgnoreStackSize = tonumber(val) end,
+					get = function(_) return tostring(RE.Config.IgnoreStackSize) end
+				},
 				dbcleanup = {
 					name = L["Data freshness"],
 					desc = L["The number of days after which old data will be deleted."],
 					type = "range",
 					width = "double",
-					order = 2,
+					order = 3,
 					min = 1,
 					max = 14,
 					step = 1,
@@ -231,7 +241,7 @@ function RE:OnEvent(self, event, ...)
 					desc = L["WARNING! This operation is not reversible!"],
 					type = "execute",
 					width = "double",
-					order = 3,
+					order = 4,
 					confirm = true,
 					func = function() RE.DB[RE.RealmString] = {}; collectgarbage("collect") end
 				},
@@ -240,14 +250,14 @@ function RE:OnEvent(self, event, ...)
 					desc = L["WARNING! This operation is not reversible!"],
 					type = "execute",
 					width = "double",
-					order = 4,
+					order = 5,
 					confirm = true,
 					func = function() RE.DB[RE.RegionString] = {}; collectgarbage("collect") end
 				},
 				separator = {
 					type = "header",
 					name = STATISTICS,
-					order = 5
+					order = 6
 				},
 				description = {
 					type = "description",
@@ -263,7 +273,7 @@ function RE:OnEvent(self, event, ...)
 
 						return s
 					end,
-					order = 6
+					order = 7
 				}
 			}
 		}
@@ -403,7 +413,10 @@ function RE:Scan()
 			if link then
 				progress = progress + 1
 				RE.AHButton:SetText(progress.." / "..num)
-				RE.DBScan[i] = {["Price"] = price / count, ["ItemID"] = itemID, ["ItemLink"] = link, ["Quality"] = quality, ["Commodity"] = stackable > 1}
+				local isCommodity = stackable > 1
+				if not isCommodity or (count >= RE.Config.IgnoreStackSize) then
+					RE.DBScan[i] = {["Price"] = price / count, ["ItemID"] = itemID, ["ItemLink"] = link, ["Quality"] = quality, ["Commodity"] = isCommodity}
+				end
 			end
 		else
 			local item = Item:CreateFromItemID(itemID)
@@ -416,7 +429,10 @@ function RE:Scan()
 						if link then
 							progress = progress + 1
 							RE.AHButton:SetText(progress.." / "..num)
-							RE.DBScan[i] = {["Price"] = price / count, ["ItemID"] = itemID, ["ItemLink"] = link, ["Quality"] = quality, ["Commodity"] = item:IsStackable()}
+							local isCommodity = item:IsStackable()
+							if not isCommodity or (count >= RE.Config.IgnoreStackSize) then
+								RE.DBScan[i] = {["Price"] = price / count, ["ItemID"] = itemID, ["ItemLink"] = link, ["Quality"] = quality, ["Commodity"] = isCommodity}
+							end
 						end
 					end
 					if not next(inProgress) then

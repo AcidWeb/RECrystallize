@@ -22,3 +22,5 @@ L["Items in database"] = true
 L["Scanning speed"] = true
 L["Decrease this value if scanning is causing disconnects."] = true
 L["Access to AH data takes longer than usual. This may be caused by server overload."] = true
+L["Minimum size of commodity stack"] = true
+L["Commodity orders that contain fewer items than the specified value will be ignored."] = true
