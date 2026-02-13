@@ -16,7 +16,7 @@ local GetRealmName = GetRealmName
 local SecondsToTime = SecondsToTime
 local IsShiftKeyDown = IsShiftKeyDown
 local SendChatMessage = C_ChatInfo.SendChatMessage
-local SetTooltipMoney = SetTooltipMoney
+local GetCoinTextureString = C_CurrencyInfo.GetCoinTextureString
 local FormatLargeNumber = FormatLargeNumber
 local IsLinkType = LinkUtil.IsLinkType
 local ExtractLink = LinkUtil.ExtractLink
@@ -73,6 +73,11 @@ local function GetPetMoneyString(money, size)
 	end
 
 	return moneyString
+end
+
+-- Workaround for MoneyFrame issues
+local function SetTooltipMoney(frame, money, _type, prefix, suffix)
+	frame:AddLine(prefix.." "..GetCoinTextureString(money)..suffix)
 end
 
 function RE:OnLoad(self)
