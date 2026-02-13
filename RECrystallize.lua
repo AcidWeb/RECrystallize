@@ -323,8 +323,6 @@ function RE:TooltipAddPrice(self, data)
 					local slot = owner:GetSlotIndex()
 					if #owner.transaction.allocationTbls[slot].allocs == 1 then
 						link = gsub(link, "item:(%d+)", "item:"..owner.transaction.allocationTbls[slot].allocs[1].reagent.itemID)
-					else
-						return
 					end
 				end
 			end
@@ -345,7 +343,8 @@ function RE:TooltipAddPrice(self, data)
 			end
 			if RE.CurrentRecord[RE.TooltipItemVariant] ~= nil then
 				local shiftPressed = IsShiftKeyDown()
-				if ((shiftPressed and not RE.Config.AlwaysShowAll) or (not shiftPressed and RE.Config.AlwaysShowAll)) and (RE.TooltipCount > 0 or RE.TooltipCustomCount > 0) then
+				local showCount = (shiftPressed and not RE.Config.AlwaysShowAll) or (not shiftPressed and RE.Config.AlwaysShowAll)
+				if (RE.TooltipCustomCount > 0 and not showCount) or (showCount and RE.TooltipCount > 0) then
 					local count = RE.TooltipCustomCount > 0 and RE.TooltipCustomCount or RE.TooltipCount
 					SetTooltipMoney(self, RE.CurrentRecord[RE.TooltipItemVariant].Price * count, nil, "|cFF74D06C"..BUTTON_LAG_AUCTIONHOUSE..":|r", " (x"..count..")"..RE.TooltipIcon)
 				else
