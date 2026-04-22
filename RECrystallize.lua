@@ -9,6 +9,7 @@ local Item = Item
 local Round = Round
 local PlaySound = PlaySound
 local GetCVar = GetCVar
+local issecretvalue = issecretvalue
 local NewTicker = C_Timer.NewTicker
 local GetItemInfo = C_Item.GetItemInfo
 local GetItemCount = C_Item.GetItemCount
@@ -95,7 +96,7 @@ function RE:OnEvent(self, event, ...)
 		RE:Scan()
 	elseif event == "CHAT_MSG_GUILD" then
 		local msg = ...
-		if sMatch(msg, "^!!!") then
+		if not issecretvalue(msg) and sMatch(msg, "^!!!") then
 			local itemID, itemVariant = nil, ""
 			if IsLinkType(msg, "item") then
 				itemID = tonumber(sMatch(msg, "item:(%d+)"))
